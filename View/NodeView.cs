@@ -335,6 +335,10 @@ namespace NodeGraph.View
 
 		public void OnCanvasRenderTransformChanged()
 		{
+			if (VisualParent == null)
+			{
+				return;
+			}
 			Matrix matrix = ( VisualParent as Canvas ).RenderTransform.Value;
 			double scale = matrix.M11;
 

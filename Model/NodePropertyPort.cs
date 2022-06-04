@@ -1,6 +1,7 @@
 ﻿using NodeGraph.ViewModel;
 using System;
 using System.Reflection;
+using System.Windows;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -182,8 +183,31 @@ namespace NodeGraph.Model
 				Type nodeType = Owner.GetType();
 				_FieldInfo = nodeType.GetField( Name );
 				_PropertyInfo = nodeType.GetProperty( Name );
-
-				Type propType = ( null != _FieldInfo ) ? _FieldInfo.GetValue( Owner ).GetType() : _PropertyInfo.GetValue( Owner ).GetType();
+				Type propType;
+				if (_FieldInfo != null)
+				{
+					var value = _FieldInfo.GetValue(Owner);
+					if (value != null)
+					{
+						propType = value.GetType();
+					}
+					else
+					{
+						propType = _FieldInfo.FieldType;
+					}
+				}
+				else
+				{
+					var value = _PropertyInfo.GetValue(Owner);
+					if (value != null)
+					{
+						propType = value.GetType();
+					}
+					else
+					{
+						propType = _PropertyInfo.PropertyType;
+					}
+				}
 				if( propType != ValueType )
 				{
 					throw new ArgumentException( string.Format( "ValueType( {0} ) is invalid, becasue a type of property or field is {1}.",

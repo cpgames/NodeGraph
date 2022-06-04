@@ -104,6 +104,13 @@ namespace NodeGraph.View
 
 		public ModelBase FindModelUnderMouse( Point mousePos, out Point viewSpacePos, out Point modelSpacePos, out ModelType modelType )
 		{
+			if (ViewModel == null)
+			{
+				viewSpacePos = new Point( 0, 0 );
+				modelSpacePos = new Point( 0, 0 );
+				modelType = ModelType.Node;
+				return null;
+			}
 			ModelBase model = ViewModel.Model;
 
 			viewSpacePos = mousePos;
@@ -242,8 +249,11 @@ namespace NodeGraph.View
 
 			foreach( var pair in NodeGraphManager.Nodes )
 			{
-				NodeView nodeView = pair.Value.ViewModel.View;
-				nodeView.OnCanvasRenderTransformChanged();
+				if (pair.Value.Owner == ViewModel.Model)
+				{
+					NodeView nodeView = pair.Value.ViewModel.View;
+					nodeView.OnCanvasRenderTransformChanged();
+				}
 			}
 		}
 

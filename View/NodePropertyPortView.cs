@@ -124,7 +124,7 @@ namespace NodeGraph.View
 
 		#region Property Editors
 
-		private void CreatePropertyEditor()
+		protected virtual void CreatePropertyEditor()
 		{
 			NodePropertyPort port = ViewModel.Model as NodePropertyPort;
 			if( port.HasEditor )
@@ -229,7 +229,10 @@ namespace NodeGraph.View
 			TextBoxEx textBox = new TextBoxEx();
 			textBox.Text = port.Value.ToString();
 			textBox.SetBinding( TextBox.TextProperty, CreateBinding( port, "Value", null ) );
-			return textBox;
+            textBox.AcceptsReturn = true;
+            textBox.TextWrapping = TextWrapping.Wrap;
+            textBox.MinWidth = 50;
+            return textBox;
 		}
 
 		public FrameworkElement CreateByteEditor()

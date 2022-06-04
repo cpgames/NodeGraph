@@ -1903,19 +1903,28 @@ namespace NodeGraph
 		public static void AddScreenLog( FlowChart flowChart, string log )
 		{
 			FlowChartView view = flowChart.ViewModel.View;
-			view.AddLog( log );
+			if (view != null)
+			{
+				view.AddLog(log);
+			}
 		}
 
 		public static void RemoveScreenLog( FlowChart flowChart, string log )
 		{
 			FlowChartView view = flowChart.ViewModel.View;
-			view.RemoveLog( log );
+			if (view != null)
+			{
+				view.RemoveLog(log);
+			}
 		}
 
 		public static void ClearScreenLogs( FlowChart flowChart )
 		{
 			FlowChartView view = flowChart.ViewModel.View;
-			view.ClearLogs();
+			if (view != null)
+			{
+				view.ClearLogs();
+			}
 		}
 
 		#endregion // Logs

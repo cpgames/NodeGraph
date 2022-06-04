@@ -58,7 +58,9 @@ namespace NodeGraph.View
 				Source = new Uri( "/NodeGraph;component/Themes/generic.xaml", UriKind.RelativeOrAbsolute )
 			};
 
-			Style style = resourceDictionary[ attrs[ 0 ].ViewStyleName ] as Style;
+            var styleName = attrs[0].ViewStyleName;
+            var res = resourceDictionary[styleName];
+            Style style = res as Style;
 			if( null == style )
 			{
 				style = Application.Current.TryFindResource( attrs[ 0 ].ViewStyleName ) as Style;
