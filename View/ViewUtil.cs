@@ -90,7 +90,7 @@ namespace NodeGraph.View
 
 		public static Point GetRelativeCenterLocation( FrameworkElement visual, FrameworkElement parentVisual )
 		{
-			if (parentVisual.IsAncestorOf(visual))
+			if (parentVisual != null && parentVisual.IsAncestorOf(visual))
 			{
 				return visual.TransformToAncestor(parentVisual).Transform(
 						new Point(visual.ActualWidth / 2.0, visual.ActualHeight / 2.0));

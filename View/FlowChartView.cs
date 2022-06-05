@@ -82,15 +82,15 @@ namespace NodeGraph.View
 		public FlowChartView()
 		{
 			Focusable = true;
+			AllowDrop = true;
+
 			DataContextChanged += FlowChartView_DataContextChanged;
 
 			SizeChanged += FlowChartView_SizeChanged;
 
-			_Timer.Interval = new TimeSpan( 0, 0, 0, 0, 33 );
+			_Timer.Interval = new TimeSpan(0, 0, 0, 0, 33);
 			_Timer.Tick += Timer_Tick;
 			_Timer.Start();
-
-			AllowDrop = true;
 
 			DragEnter += FlowChartView_DragEnter;
 			DragLeave += FlowChartView_DragLeave;
@@ -188,6 +188,23 @@ namespace NodeGraph.View
 			_PartDragAndSelectionCanvas = GetTemplateChild( "PART_DragAndSelectionCanvas" ) as FrameworkElement;
 			if( null == _PartDragAndSelectionCanvas )
 				throw new Exception( "PART_DragAndSelectionCanvas can not be null in FlowChartView" );
+
+
+			if (null == _ConnectorCanvas)
+			{
+				_ConnectorCanvas = ViewUtil.FindChild<Canvas>(_PartNodeViewsContainer);
+				if (null == _PartDragAndSelectionCanvas)
+					throw new Exception("Canvas can not be null in PART_ConnectorViewsContainer");
+			}
+
+			if (null == _NodeCanvas)
+			{
+				_NodeCanvas = ViewUtil.FindChild<Canvas>(_PartNodeViewsContainer);
+				if (null == _PartDragAndSelectionCanvas)
+					throw new Exception("Canvas can not be null in PART_NodeViewsContainer");
+			}
+
+			_ZoomAndPan.UpdateTransform += _ZoomAndPan_UpdateTransform;
 		}
 
 		#endregion // Template
@@ -205,25 +222,15 @@ namespace NodeGraph.View
 			ViewModel = DataContext as FlowChartViewModel;
 			if( null == ViewModel )
 				return;
-
 			ViewModel.View = this;
 			ViewModel.PropertyChanged += ViewModelPropertyChanged;
 
-			if( null == _ConnectorCanvas )
+			if (null == _NodeCanvas && _PartNodeViewsContainer != null)
 			{
-				_ConnectorCanvas = ViewUtil.FindChild<Canvas>( _PartNodeViewsContainer );
-				if( null == _PartDragAndSelectionCanvas )
-					throw new Exception( "Canvas can not be null in PART_ConnectorViewsContainer" );
+				_NodeCanvas = ViewUtil.FindChild<Canvas>(_PartNodeViewsContainer);
+				if (null == _PartDragAndSelectionCanvas)
+					throw new Exception("Canvas can not be null in PART_NodeViewsContainer");
 			}
-
-			if( null == _NodeCanvas )
-			{
-				_NodeCanvas = ViewUtil.FindChild<Canvas>( _PartNodeViewsContainer );
-				if( null == _PartDragAndSelectionCanvas )
-					throw new Exception( "Canvas can not be null in PART_NodeViewsContainer" );
-			}
-
-			_ZoomAndPan.UpdateTransform += _ZoomAndPan_UpdateTransform;
 		}
 
 		protected virtual void SynchronizeProperties()
@@ -245,6 +252,9 @@ namespace NodeGraph.View
 
 		private void _ZoomAndPan_UpdateTransform()
 		{
+			if (_NodeCanvas == null)
+				return;
+
 			_NodeCanvas.RenderTransform = new MatrixTransform( _ZoomAndPan.Matrix );
 
 			foreach( var pair in NodeGraphManager.Nodes )
