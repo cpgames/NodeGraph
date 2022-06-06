@@ -219,9 +219,15 @@ namespace NodeGraph.View
 
 		private void FlowChartView_DataContextChanged( object sender, DependencyPropertyChangedEventArgs e )
 		{
+			if (ViewModel != null)
+			{
+				ViewModel.PropertyChanged -= ViewModelPropertyChanged;
+			}
 			ViewModel = DataContext as FlowChartViewModel;
-			if( null == ViewModel )
+			if (null == ViewModel)
+			{
 				return;
+			}
 			ViewModel.View = this;
 			ViewModel.PropertyChanged += ViewModelPropertyChanged;
 
