@@ -398,7 +398,7 @@
                                              IsEnabled="{Binding Model.AllowEditingHeader}"/>
                                 </Grid>
 								<!-- Node Properties -->
-								<Grid Grid.Row="1">
+								<Grid Grid.Row="1" Name="NodeFlowContent">
 									<Grid.ColumnDefinitions>
 										<ColumnDefinition/>
 										<ColumnDefinition Width="50"/>
