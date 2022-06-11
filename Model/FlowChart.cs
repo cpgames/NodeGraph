@@ -13,6 +13,19 @@ namespace NodeGraph.Model
 	public class FlowChart : ModelBase
 	{
 		#region Properties
+		protected string _IsReference;
+		public string IsReference
+		{
+			get { return _IsReference; }
+			set
+			{
+				if (value != _IsReference)
+				{
+					_IsReference = value;
+					RaisePropertyChanged("IsReference");
+				}
+			}
+		}
 
 		protected FlowChartViewModel _ViewModel;
 		public FlowChartViewModel ViewModel
@@ -141,6 +154,8 @@ namespace NodeGraph.Model
 		{
 			base.WriteXml( writer );
 
+            writer.WriteAttributeString("IsReference", IsReference);
+
 			writer.WriteStartElement( "Nodes" );
 			foreach( var node in Nodes )
 			{
@@ -162,6 +177,8 @@ namespace NodeGraph.Model
 		public override void ReadXml( XmlReader reader )
 		{
 			base.ReadXml( reader );
+
+            IsReference = reader.GetAttribute("IsReference");
 
 			bool isNodesEnd = false;
 			bool isConnectorsEnd = false;
