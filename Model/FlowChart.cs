@@ -1,10 +1,6 @@
 ﻿using NodeGraph.ViewModel;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace NodeGraph.Model
@@ -13,8 +9,22 @@ namespace NodeGraph.Model
 	public class FlowChart : ModelBase
 	{
 		#region Properties
-		protected string _IsReference;
-		public string IsReference
+        protected string _Name;
+        public string Name
+        {
+            get { return _Name; }
+            set
+            {
+                if (value != _Name)
+                {
+                    _Name = value;
+                    RaisePropertyChanged("Name");
+                }
+            }
+        }
+
+		protected bool _IsReference;
+		public bool IsReference
 		{
 			get { return _IsReference; }
 			set
@@ -154,7 +164,8 @@ namespace NodeGraph.Model
 		{
 			base.WriteXml( writer );
 
-            writer.WriteAttributeString("IsReference", IsReference);
+            writer.WriteAttributeString("Name", Name);
+			writer.WriteAttributeString("IsReference", IsReference.ToString());
 
 			writer.WriteStartElement( "Nodes" );
 			foreach( var node in Nodes )
@@ -178,7 +189,11 @@ namespace NodeGraph.Model
 		{
 			base.ReadXml( reader );
 
-            IsReference = reader.GetAttribute("IsReference");
+			Name = reader.GetAttribute("Name");
+			if (bool.TryParse(reader.GetAttribute("IsReference"), out var isReference))
+            {
+                IsReference = isReference;
+            }
 
 			bool isNodesEnd = false;
 			bool isConnectorsEnd = false;

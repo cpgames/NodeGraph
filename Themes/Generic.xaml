@@ -350,7 +350,7 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type v:NodeView}">
-					<Grid>
+					<Grid Name="Node" >
 						<!-- Background -->
 						<Border Background="{TemplateBinding Background}"
 								Margin="{TemplateBinding Margin}"
@@ -377,7 +377,7 @@
 									<RowDefinition Height="Auto"/>
 								</Grid.RowDefinitions>
 								<!-- Node Header -->
-								<Grid Grid.Row="0" Background="{Binding Model.HeaderBackgroundColor}">
+								<Grid Grid.Row="0" Name="NodeHeader"  Background="{Binding Model.HeaderBackgroundColor}">
 									<Grid.ColumnDefinitions>
 										<ColumnDefinition Width="25"/>
 										<ColumnDefinition Width="*"/>
@@ -396,8 +396,18 @@
                                              FontWeight="Bold"
                                              FontSize="12"
                                              IsEnabled="{Binding Model.AllowEditingHeader}"/>
+                                    <!-- Node Help Image -->
+                                    <Button Grid.Column="2" 
+                                            Name ="HelpButton"
+                                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                                            Height="20" Width="20"
+                                            Command="{Binding Model.HelpCommand}"
+                                            Visibility="Hidden">
+                                        <Image Source="pack://application:,,,/NodeGraph;component/Resources/Images/Help.png" />
+                                    </Button>
+
                                 </Grid>
-								<!-- Node Properties -->
+								<!-- Node Flow Ports -->
 								<Grid Grid.Row="1" Name="NodeFlowContent">
 									<Grid.ColumnDefinitions>
 										<ColumnDefinition/>
@@ -430,7 +440,7 @@
 									</v:NodeFlowPortViewsContainer>
 								</Grid>
 								<!-- Node Properites -->
-								<Grid Grid.Row="2">
+                                <Grid Grid.Row="2" Name="NodePropertyContent" >
 									<Grid.ColumnDefinitions>
 										<ColumnDefinition/>
 										<ColumnDefinition Width="50"/>
@@ -525,7 +535,7 @@
 							</Canvas>
 							<!-- Log -->
 							<Grid>
-								<ListView IsHitTestVisible="False" BorderThickness="0" Background="Transparent" VerticalAlignment="Top" HorizontalAlignment="Left" ItemsSource="{TemplateBinding Logs}">
+								<ListView IsHitTestVisible="True" BorderThickness="0" Background="Transparent" VerticalAlignment="Top" HorizontalAlignment="Left" ItemsSource="{TemplateBinding Logs}">
 									<ListView.ItemTemplate>
 										<DataTemplate>
 											<TextBlock Style="{StaticResource LogTextBlockStyle}" Text="{Binding}"/>

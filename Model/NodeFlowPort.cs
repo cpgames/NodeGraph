@@ -1,6 +1,4 @@
-﻿using NodeGraph.ViewModel;
-using System;
-using System.Xml;
+﻿using System;
 
 namespace NodeGraph.Model
 {

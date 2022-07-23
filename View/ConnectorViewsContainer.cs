@@ -1,6 +1,4 @@
 ﻿using ConnectorGraph.ViewModel;
-using NodeGraph.View;
-using NodeGraph.ViewModel;
 using System;
 using System.Windows;
 using System.Windows.Controls;

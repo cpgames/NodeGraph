@@ -67,6 +67,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\CheckboxForEnumWithFlagAttribute.cs" />
     <Compile Include="Controls\NumericTextBox.cs" />
     <Compile Include="Converters\ByteToStringConverter.cs" />
     <Compile Include="Converters\DoubleToStringConverter.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Converters\IntToStringConverter.cs" />
     <Compile Include="Model\Connector.cs" />
     <Compile Include="Model\ConnectorAttribute.cs" />
+    <Compile Include="Model\ExecutionState.cs" />
     <Compile Include="Model\FlowChartAttribute.cs" />
     <Compile Include="Model\ModelBase.cs" />
     <Compile Include="NodeGraphManager.cs" />
@@ -133,18 +135,24 @@
     <Compile Include="View\NodePropertyPortViewsContainer.cs" />
     <Compile Include="View\NodeView.cs" />
     <Compile Include="View\NodeViewsContainer.cs" />
+    <Compile Include="Commands\RelayCommand.cs" />
     <Compile Include="View\ViewUtil.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Resources\Images\Skipped.png" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="propn.snippet" />
   </ItemGroup>
@@ -153,5 +161,9 @@
     <Resource Include="Resources\Images\Executing.png" />
     <Resource Include="Resources\Images\Failed.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Images\Help.png" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

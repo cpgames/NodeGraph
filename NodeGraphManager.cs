@@ -1,16 +1,15 @@
 ﻿using NodeGraph.Model;
 using NodeGraph.View;
 using NodeGraph.ViewModel;
-using PropertyTools.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Media;
 using System.Xml;
 
 namespace NodeGraph
@@ -119,6 +118,10 @@ namespace NodeGraph
 			return flowChart;
 		}
 
+		public static FlowChart FindFlowChart(string name)
+		{
+			return FlowCharts.Values.FirstOrDefault(x => x.Name == name);
+        }
 		#endregion // FlowChart
 
 		#region Node
@@ -186,7 +189,7 @@ namespace NodeGraph
 				var flowPortAttrs = nodeType.GetCustomAttributes( typeof( NodeFlowPortAttribute ), false ) as NodeFlowPortAttribute[];
 				foreach( var attr in flowPortAttrs )
 				{
-					NodeFlowPort port = CreateNodeFlowPort( false,
+					CreateNodeFlowPort( false,
 						Guid.NewGuid(), node, attr.IsInput,
 						( null != flowPortViewModelTypeOverride ) ? flowPortViewModelTypeOverride : attr.ViewModelType,
 						attr.Name, attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled );
@@ -202,10 +205,11 @@ namespace NodeGraph
 					{
 						foreach( var attr in nodePropertyAttrs )
 						{
-							NodePropertyPort port = CreateNodePropertyPort( false, Guid.NewGuid(), node, attr.IsInput,
+							CreateNodePropertyPort( false, Guid.NewGuid(), node, attr.IsInput,
 								attr.ValueType, attr.DefaultValue, propertyInfo.Name, attr.HasEditor,
 								( null != propertyPortViewModelTypeOverride ) ? propertyPortViewModelTypeOverride : attr.ViewModelType,
-								attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled );
+								attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled,
+                                attr.Index, attr.Serialized);
 						}
 					}
 				}
@@ -220,10 +224,11 @@ namespace NodeGraph
 					{
 						foreach( var attr in nodePropertyAttrs )
 						{
-							NodePropertyPort port = CreateNodePropertyPort( false, Guid.NewGuid(), node, attr.IsInput,
+							CreateNodePropertyPort( false, Guid.NewGuid(), node, attr.IsInput,
 								attr.ValueType, attr.DefaultValue, fieldInfo.Name, attr.HasEditor,
 								( null != propertyPortViewModelTypeOverride ) ? propertyPortViewModelTypeOverride : attr.ViewModelType,
-								attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled );
+								attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled,
+                                attr.Index, attr.Serialized);
 						}
 					}
 				}
@@ -371,10 +376,10 @@ namespace NodeGraph
 				NodePropertyPort propertyPort = referencePort as NodePropertyPort;
 				CreateNodePropertyPort( false, Guid.NewGuid(), node, true, propertyPort.ValueType, propertyPort.Value, "Input", false,
 					propertyPortViewModelTypeOverride,
-					"", false, false, true, true );
+					"", false, false, true, true, -1, false );
 				CreateNodePropertyPort( false, Guid.NewGuid(), node, false, propertyPort.ValueType, propertyPort.Value, "Output", false,
 					propertyPortViewModelTypeOverride,
-					"", false, false, true, true );
+					"", false, false, true, true, -1, false);
 			}
 
 			return node;
@@ -538,19 +543,29 @@ namespace NodeGraph
 
 			if( port.IsInput )
 			{
-				node.ViewModel.InputFlowPortViewModels.Remove( port.ViewModel as NodeFlowPortViewModel );
-				if( isFlowPort )
-					node.InputFlowPorts.Remove( port as NodeFlowPort );
+				if (isFlowPort)
+				{
+					node.ViewModel.InputFlowPortViewModels.Remove(port.ViewModel as NodeFlowPortViewModel);
+					node.InputFlowPorts.Remove(port as NodeFlowPort);
+				}
 				else
-					node.InputPropertyPorts.Remove( port as NodePropertyPort );
+				{
+                    node.ViewModel.InputPropertyPortViewModels.Remove(port.ViewModel as NodePropertyPortViewModel);
+					node.InputPropertyPorts.Remove(port as NodePropertyPort);
+				}
 			}
 			else
 			{
-				node.ViewModel.OutputFlowPortViewModels.Remove( port.ViewModel as NodeFlowPortViewModel );
-				if( isFlowPort )
-					node.OutputFlowPorts.Remove( port as NodeFlowPort );
+				if (isFlowPort)
+				{
+					node.ViewModel.OutputFlowPortViewModels.Remove(port.ViewModel as NodeFlowPortViewModel);
+					node.OutputFlowPorts.Remove(port as NodeFlowPort);
+				}
 				else
-					node.OutputPropertyPorts.Remove( port as NodePropertyPort );
+				{
+                    node.ViewModel.OutputPropertyPortViewModels.Remove(port.ViewModel as NodePropertyPortViewModel);
+					node.OutputPropertyPorts.Remove(port as NodePropertyPort);
+				}
 			}
 
 			port.OnPostDestroy();
@@ -644,7 +659,8 @@ namespace NodeGraph
 		/// <param name="portViewModelTypeOverride">ViewModelType to override.</param>
 		/// <returns>Created NodeFlwoPort instance.</returns>
 		public static NodeFlowPort CreateNodeFlowPort( bool isDeserializing, Guid guid, Node node, bool isInput, Type portViewModelTypeOverride = null,
-			string name = "None", string displayName = "None", bool allowMultipleInput = true, bool allowMultipleOutput = false, bool isPortEnabled = true, bool isEnabled = true )
+			string name = "None", string displayName = "None", bool allowMultipleInput = true, bool allowMultipleOutput = false, bool isPortEnabled = true, bool isEnabled = true,
+            int index = -1)
 		{
 			//----- exceptions.
 
@@ -670,15 +686,33 @@ namespace NodeGraph
 
 			// add port to node.
 			port.ViewModel = portVM;
-			if( isInput )
+			if ( isInput )
 			{
-				node.InputFlowPorts.Add( port );
-				node.ViewModel.InputFlowPortViewModels.Add( portVM );
+				if (index < 0)
+				{
+					node.InputFlowPorts.Add(port);
+					node.ViewModel.InputFlowPortViewModels.Add(portVM);
+				}
+                else
+				{
+					index = Math.Min(index, node.InputFlowPorts.Count - 1);
+					node.InputFlowPorts.Insert(index, port);
+                    node.ViewModel.InputFlowPortViewModels.Insert(index, portVM);
+				}
 			}
 			else
 			{
-				node.OutputFlowPorts.Add( port );
-				node.ViewModel.OutputFlowPortViewModels.Add( portVM );
+				if (index == -1)
+				{
+					node.OutputFlowPorts.Add(port);
+					node.ViewModel.OutputFlowPortViewModels.Add(portVM);
+				}
+                else
+				{
+					index = Math.Min(index, node.OutputFlowPorts.Count - 1);
+					node.OutputFlowPorts.Insert(index, port);
+                    node.ViewModel.OutputFlowPortViewModels.Insert(index, portVM);
+				}
 			}
 
 			//----- invoke Create callback.
@@ -740,7 +774,8 @@ namespace NodeGraph
 		// <param name="portViewModelTypeOverride">ViewModelType to override.</param>
 		/// <returns>Created NodePropertyPort instance.</returns>
 		public static NodePropertyPort CreateNodePropertyPort( bool isDeserializing, Guid guid, Node node, bool isInput, Type valueType, object defaultValue, string name, bool hasEditor,
-			Type portViewModelTypeOverride = null, string displayName = "", bool allowMultipleInput = false, bool allowMultipleOutput = true, bool isPortEnabled = true, bool isEnabled = true )
+			Type portViewModelTypeOverride = null, string displayName = "", bool allowMultipleInput = false, bool allowMultipleOutput = true, bool isPortEnabled = true, bool isEnabled = true,
+            int index = -1, bool serializeValue = true)
 		{
 			//----- exceptions.
 
@@ -751,7 +786,7 @@ namespace NodeGraph
 
 			// create propertyPort model.
 			NodePropertyPort port = Activator.CreateInstance( typeof( NodePropertyPort ),
-				new object[] { guid, node, isInput, valueType, defaultValue, name, hasEditor } ) as NodePropertyPort;
+				new object[] { guid, node, isInput, valueType, defaultValue, name, hasEditor, serializeValue } ) as NodePropertyPort;
 			port.DisplayName = displayName;
 			port.AllowMultipleInput = allowMultipleInput;
 			port.AllowMultipleOutput = allowMultipleOutput;
@@ -765,15 +800,33 @@ namespace NodeGraph
 			port.ViewModel = portVM;
 
 			// add to node.
-			if( port.IsInput )
+			if ( port.IsInput )
 			{
-				node.InputPropertyPorts.Add( port );
-				node.ViewModel.InputPropertyPortViewModels.Add( portVM );
+				if (index < 0 || node.InputFlowPorts.Count == 0)
+				{
+					node.InputPropertyPorts.Add(port);
+					node.ViewModel.InputPropertyPortViewModels.Add(portVM);
+				}
+                else
+				{
+					index = Math.Min(index, node.InputFlowPorts.Count - 1);
+					node.InputPropertyPorts.Insert(index, port);
+                    node.ViewModel.InputPropertyPortViewModels.Insert(index, portVM);
+				}
 			}
 			else
 			{
-				node.OutputPropertyPorts.Add( port );
-				node.ViewModel.OutputPropertyPortViewModels.Add( portVM );
+				if (index < 0 || node.OutputPropertyPorts.Count == 0)
+				{
+					node.OutputPropertyPorts.Add(port);
+					node.ViewModel.OutputPropertyPortViewModels.Add(portVM);
+				}
+                else
+				{
+					index = Math.Min(index, node.OutputPropertyPorts.Count - 1);
+					node.OutputPropertyPorts.Insert(index, port);
+                    node.ViewModel.OutputPropertyPortViewModels.Insert(index, portVM);
+				}
 			}
 
 			//----- invoke Create callback.
@@ -1349,9 +1402,7 @@ namespace NodeGraph
 
 		public static void UpdateDragSelection( FlowChart flowChart, Point end, bool bCtrl, bool bShift, bool bAlt )
 		{
-			FlowChartView flowChartView = flowChart.ViewModel.View;
-
-			double startX = SelectingStartPoint.X;
+            double startX = SelectingStartPoint.X;
 			double startY = SelectingStartPoint.Y;
 
 			Point selectionStart = new Point( Math.Min( startX, end.X ), Math.Min( startY, end.Y ) );
@@ -1938,7 +1989,7 @@ namespace NodeGraph
 				Node node = pair.Value;
 				if( flowChart == node.Owner )
 				{
-					node.ExecutionState = NodeExecutionState.None;
+					node.ExecutionState = ExecutionState.None;
 				}
 			}
 		}

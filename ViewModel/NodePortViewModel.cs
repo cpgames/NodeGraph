@@ -1,13 +1,8 @@
 ﻿using NodeGraph.Model;
 using NodeGraph.View;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media;
+// ReSharper disable UnusedVariable
 
 namespace NodeGraph.ViewModel
 {
@@ -65,7 +60,6 @@ namespace NodeGraph.ViewModel
 			{
 				foreach( var item in e.NewItems )
 				{
-					var addedConnector = item as Connector;
 					node.ViewModel.RaisePropertyChanged( "Connectors" );
 				}
 			}

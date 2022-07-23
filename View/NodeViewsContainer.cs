@@ -1,9 +1,7 @@
-﻿using NodeGraph.Model;
-using NodeGraph.ViewModel;
+﻿using NodeGraph.ViewModel;
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace NodeGraph.View
 {
@@ -19,9 +17,7 @@ namespace NodeGraph.View
 
 		protected override bool IsItemItsOwnContainerOverride( object item )
 		{
-			NodeViewModel viewModel = item as NodeViewModel;
-
-			var attrs = item.GetType().GetCustomAttributes( typeof( NodeViewModelAttribute ), false ) as NodeViewModelAttribute[];
+            var attrs = item.GetType().GetCustomAttributes( typeof( NodeViewModelAttribute ), false ) as NodeViewModelAttribute[];
 
 			if( 0 == attrs.Length )
 			{

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NodeGraph.Model
 {
@@ -16,6 +12,7 @@ namespace NodeGraph.Model
 		public bool AllowMultipleOutput = false;
 		public bool IsPortEnabled = true;
 		public bool IsEnabled = true;
+		public int Index = -1;
 
 		public NodePortAttribute( string displayName, bool isInput )
 		{

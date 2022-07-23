@@ -11,6 +11,7 @@ namespace NodeGraph.Model
 		public Type ViewModelType = typeof( NodePropertyPortViewModel );
 		public object DefaultValue;
 		public bool HasEditor;
+        public bool Serialized = true;
 
 		public NodePropertyPortAttribute( string displayName, bool isInput, Type valueType, object defaultValue, bool hasEditor ) : base( displayName, isInput )
 		{
@@ -26,7 +27,8 @@ namespace NodeGraph.Model
 				}
 			}
 
-			if( !valueType.IsClass && ( null == defaultValue ) )
+			if( !valueType.IsClass && !valueType.IsInterface  && ( null == defaultValue ) && 
+               Nullable.GetUnderlyingType(valueType) == null)
 			{
 				throw new ArgumentException( "If ValueType is not a class, you cannot specify value as null" );
 			}

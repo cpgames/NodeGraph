@@ -1,18 +1,7 @@
 ﻿using NodeGraph.ViewModel;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace NodeGraph.View
 {
@@ -40,9 +29,7 @@ namespace NodeGraph.View
 
 		protected override bool IsItemItsOwnContainerOverride( object item )
 		{
-			NodeFlowPortViewModel viewModel = item as NodeFlowPortViewModel;
-
-			var attrs = item.GetType().GetCustomAttributes( typeof( NodeFlowPortViewModelAttribute ), false ) as NodeFlowPortViewModelAttribute[];
+            var attrs = item.GetType().GetCustomAttributes( typeof( NodeFlowPortViewModelAttribute ), false ) as NodeFlowPortViewModelAttribute[];
 
 			if( 0 == attrs.Length )
 			{
