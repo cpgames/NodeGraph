@@ -217,7 +217,15 @@ namespace NodeGraph.Model
 							Type vmType = Type.GetType( reader.GetAttribute( "ViewModelType" ) );
 
 							Node node = NodeGraphManager.CreateNode( true, guid, flowChart, type, 0.0, 0.0, 0, vmType );
-							node.ReadXml( reader );
+                            try
+                            {
+                                node.ReadXml(reader);
+                            }
+                            catch (Exception e)
+                            {
+                                NodeGraphManager.DestroyNode(guid);
+
+                            }
 						}
 						else
 						{

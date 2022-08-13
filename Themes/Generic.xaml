@@ -93,7 +93,14 @@
 					<Grid>
 						<Path Stroke="Transparent" StrokeThickness="20" Data="{Binding Path=CurveData, RelativeSource={RelativeSource AncestorType={x:Type v:ConnectorView}}}"/>
 						<Path x:Name="ConnectorCurve" Stroke="White" StrokeThickness="2" Data="{Binding Path=CurveData, RelativeSource={RelativeSource AncestorType={x:Type v:ConnectorView}}}"/>
-					</Grid>
+                        <v:RouterViewsContainer ItemsSource="{Binding RouterViewModels}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </v:RouterViewsContainer>
+                    </Grid>
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
 							<Setter TargetName="ConnectorCurve" Property="Stroke" Value="DarkOrange"/>
@@ -103,8 +110,27 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
-
-	<!-- DefaultNodeFlowPortView Style -->
+    
+    <!-- RouterView Style -->
+    <Style x:Key="RouterViewStyle" TargetType="{x:Type ContentControl}">
+        <Setter Property="Canvas.Left" Value="{Binding Path=RelativeX, RelativeSource={RelativeSource AncestorType={x:Type v:RouterView}}}"/>
+        <Setter Property="Canvas.Top" Value="{Binding Path=RelativeY, RelativeSource={RelativeSource AncestorType={x:Type v:RouterView}}}"/>
+        <Setter Property="Content" Value=""/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Grid>
+                        <Label Content="{Binding Path=RelativeX, RelativeSource={RelativeSource AncestorType={x:Type v:RouterView}}}" Foreground="White"></Label>
+                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="20" Height="20" Background="Transparent"/>
+                        <Ellipse VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                 IsHitTestVisible="False" Stroke="{TemplateBinding Foreground}" StrokeThickness="2" Width="8" Height="8" Fill="White"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- DefaultNodeFlowPortView Style -->
 	<Style x:Key="DefaultNodeFlowPortViewStyle" TargetType="{x:Type v:NodeFlowPortView}">
 		<Setter Property="Template">
 			<Setter.Value>
@@ -503,7 +529,7 @@
 									</ItemsPanelTemplate>
 								</ItemsControl.ItemsPanel>
 							</v:ConnectorViewsContainer>
-							<!-- Nodes -->
+                            <!-- Nodes -->
 							<v:NodeViewsContainer x:Name="PART_NodeViewsContainer"
 												  IsHitTestVisible="True" 
 												  ItemsSource="{Binding NodeViewModels}">

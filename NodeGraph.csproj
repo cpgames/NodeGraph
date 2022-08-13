@@ -90,6 +90,7 @@
     <Compile Include="Model\ExecutionState.cs" />
     <Compile Include="Model\FlowChartAttribute.cs" />
     <Compile Include="Model\ModelBase.cs" />
+    <Compile Include="Model\Router.cs" />
     <Compile Include="NodeGraphManager.cs" />
     <Compile Include="Model\NodeFlowPort.cs" />
     <Compile Include="Model\FlowChart.cs" />
@@ -123,9 +124,11 @@
     <Compile Include="ViewModel\NodePropertyPortViewModelAttribute.cs" />
     <Compile Include="ViewModel\NodeViewModel.cs" />
     <Compile Include="ViewModel\NodeViewModelAttribute.cs" />
+    <Compile Include="ViewModel\RouterViewModel.cs" />
     <Compile Include="ViewModel\RouterNodeViewModel.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="View\ConnectorView.cs" />
+    <Compile Include="View\RouterViewsContainer.cs" />
     <Compile Include="View\ConnectorViewsContainer.cs" />
     <Compile Include="View\FlowChartView.cs" />
     <Compile Include="View\NodeFlowPortView.cs" />
@@ -133,6 +136,7 @@
     <Compile Include="View\NodePortView.cs" />
     <Compile Include="View\NodePropertyPortView.cs" />
     <Compile Include="View\NodePropertyPortViewsContainer.cs" />
+    <Compile Include="View\RouterView.cs" />
     <Compile Include="View\NodeView.cs" />
     <Compile Include="View\NodeViewsContainer.cs" />
     <Compile Include="Commands\RelayCommand.cs" />

@@ -26,6 +26,7 @@ namespace NodeGraph
 
 		public static readonly Dictionary<Guid, FlowChart> FlowCharts = new Dictionary<Guid, FlowChart>();
 		public static readonly Dictionary<Guid, Node> Nodes = new Dictionary<Guid, Node>();
+        public static readonly Dictionary<Guid, Router> Routers = new Dictionary<Guid, Router>();
 		public static readonly Dictionary<Guid, Connector> Connectors = new Dictionary<Guid, Connector>();
 		public static readonly Dictionary<Guid, NodeFlowPort> NodeFlowPorts = new Dictionary<Guid, NodeFlowPort>();
 		public static readonly Dictionary<Guid, NodePropertyPort> NodePropertyPorts = new Dictionary<Guid, NodePropertyPort>();
@@ -175,10 +176,6 @@ namespace NodeGraph
 			flowChart.ViewModel.NodeViewModels.Add( node.ViewModel );
 			flowChart.Nodes.Add( node );
 
-			//---- history.
-
-			flowChart.History.AddCommand( new NodeGraph.History.CreateNodeCommand(
-				"Creating node", node.Guid, NodeGraphManager.SerializeNode( node ) ) );
 
 			//----- create ports.
 
@@ -236,6 +233,12 @@ namespace NodeGraph
 				//----- invoke Create callback.
 
 				node.OnCreate();
+
+
+                //---- history.
+
+                flowChart.History.AddCommand(new NodeGraph.History.CreateNodeCommand(
+                    "Creating node", node.Guid, NodeGraphManager.SerializeNode(node)));
 			}
 
 			//----- return.
@@ -327,7 +330,12 @@ namespace NodeGraph
 			Nodes.TryGetValue( guid, out node );
 			return node;
 		}
-
+		public static Router FindRouter(Guid guid)
+        {
+            Routers.TryGetValue(guid, out var router);
+            return router;
+        }
+        
 		public static List<Node> FindNode( FlowChart flowChart, string header )
 		{
 			List<Node> nodes = new List<Node>();
@@ -385,6 +393,25 @@ namespace NodeGraph
 			return node;
 		}
 
+		public static Router CreateRouter(Guid guid, Connector connector, double x, double y)
+        {
+            if (connector == null)
+                throw new ArgumentNullException("connector of CreateRouter() can not be null");
+
+            // create node model.
+            Router router = new Router(guid, connector)
+            {
+                X = x,
+                Y = y
+            };
+            // create node viewmodel.
+            router.ViewModel = new RouterViewModel(router);
+            connector.Routers.Add(router);
+            connector.ViewModel.RouterViewModels.Add(router.ViewModel);
+            Routers.Add(guid, router);
+			return router;
+        }
+
 		public static Node CreateRouterNodeForConnector( Guid guid, FlowChart flowChart, Connector connector, double X, double Y, int ZIndex )
 		{
 			NodePort startPort = connector.StartPort;
@@ -412,7 +439,6 @@ namespace NodeGraph
 
 			return node;
 		}
-
 		#endregion // RouterNode
 
 		#region Connector
@@ -721,12 +747,7 @@ namespace NodeGraph
 			{
 				port.OnCreate();
 			}
-
-			//----- history.
-
-			node.Owner.History.AddCommand( new History.CreateNodePortCommand(
-				"Creating port", port.Guid, SerializeNodePort( port ) ) );
-
+			
 			//----- return.
 
 			return port;
@@ -835,12 +856,7 @@ namespace NodeGraph
 			{
 				port.OnCreate();
 			}
-
-			//----- history.
-
-			node.Owner.History.AddCommand( new History.CreateNodePortCommand(
-				"Creating port", port.Guid, SerializeNodePort( port ) ) );
-
+			
 			//----- return.
 
 			return port;
@@ -1177,7 +1193,7 @@ namespace NodeGraph
 		public static void UpdateConnection( Point mousePos )
 		{
 			if( null != CurrentConnector )
-				CurrentConnector.ViewModel.View.BuildCurveData( mousePos );
+				CurrentConnector.ViewModel.view.BuildCurveData( mousePos );
 		}
 
 		#endregion // Connection
@@ -1193,20 +1209,20 @@ namespace NodeGraph
 			BeginDragging( flowChart.ViewModel.View );
 
 			if( IsNodeDragging )
-				throw new InvalidOperationException( "Node is already being dragging." );
+				throw new InvalidOperationException( "Node is already dragging." );
 
 			IsNodeDragging = true;
 			_NodeDraggingFlowChartGuid = flowChart.Guid;
 		}
 
-		public static void EndDragNode()
+        public static void EndDragNode()
 		{
 			EndDragging();
 
 			IsNodeDragging = false;
 			AreNodesReallyDragged = false;
 		}
-
+        
 		public static void DragNode( Point delta )
 		{
 			if( !IsNodeDragging )
@@ -1220,12 +1236,20 @@ namespace NodeGraph
 				foreach( var guid in selectedNodes )
 				{
 					Node node = FindNode( guid );
-					node.X += delta.X;
-					node.Y += delta.Y;
-				}
+					if (node != null)
+					{
+						node.X += delta.X;
+						node.Y += delta.Y;
+					}
+                    Router router = FindRouter(guid);
+					if (router != null)
+					{
+						router.X += delta.X;
+						router.Y += delta.Y;
+					}
+                }
 			}
 		}
-
 		#endregion // Node Dragging
 
 		#region Mouse Trapping
@@ -1269,6 +1293,7 @@ namespace NodeGraph
 		#region Node Selection
 
 		public static Node MouseLeftDownNode { get; set; }
+        public static Router MouseLeftDownRouter { get; set; }
 
 		public static ObservableCollection<Guid> GetSelectionList( FlowChart flowChart )
 		{
@@ -1320,7 +1345,49 @@ namespace NodeGraph
 				}
 			}
 		}
+        public static void TrySelection(FlowChart flowChart, Router router, bool bCtrl, bool bShift, bool bAlt)
+        {
+            bool bAdd = false;
+            if (bCtrl)
+            {
+                bAdd = !router.ViewModel.IsSelected;
+            }
+            else if (bShift)
+            {
+                bAdd = true;
+            }
+            else if (bAlt)
+            {
+                bAdd = false;
+            }
+            else
+            {
+                DeselectAllNodes(flowChart);
+                bAdd = true;
+            }
 
+            if (bAdd)
+            {
+                if (!router.ViewModel.IsSelected)
+                {
+                    AddSelection(router);
+
+                    flowChart.History.AddCommand(new History.NodePropertyCommand(
+                        "Selection", router.Guid, "IsSelected", false, true));
+                }
+            }
+            else
+            {
+                if (router.ViewModel.IsSelected)
+                {
+                    RemoveSelection(router);
+
+                    flowChart.History.AddCommand(new History.NodePropertyCommand(
+                        "Selection", router.Guid, "IsSelected", true, false));
+                }
+            }
+        }
+        
 		public static void AddSelection( Node node )
 		{
 			if( node.ViewModel.IsSelected )
@@ -1338,12 +1405,34 @@ namespace NodeGraph
 			MoveNodeToFront( node );
 		}
 
+		public static void AddSelection(Router router)
+        {
+            if (router.ViewModel.IsSelected)
+            {
+                return;
+            }
+
+            ObservableCollection<Guid> selectionList = GetSelectionList(router.owner.FlowChart);
+            if (!selectionList.Contains(router.Guid))
+            {
+                router.ViewModel.IsSelected = true;
+                selectionList.Add(router.Guid);
+            }
+        }
+
 		public static void RemoveSelection( Node node )
 		{
 			ObservableCollection<Guid> selectionList = GetSelectionList( node.Owner );
 			node.ViewModel.IsSelected = false;
 			selectionList.Remove( node.Guid );
 		}
+
+		public static void RemoveSelection(Router router)
+        {
+            ObservableCollection<Guid> selectionList = GetSelectionList(router.owner.FlowChart);
+            router.ViewModel.IsSelected = false;
+            selectionList.Remove(router.Guid);
+        }
 
 		public static void DeselectAllNodes( FlowChart flowChart )
 		{
@@ -1352,11 +1441,20 @@ namespace NodeGraph
 			foreach( var guid in selectionList )
 			{
 				Node node = FindNode( guid );
-				node.ViewModel.IsSelected = false;
-
-				flowChart.History.AddCommand( new History.NodePropertyCommand(
-					"Deselection", node.Guid, "IsSelected", true, false ) );
-			}
+				if (node != null)
+				{
+					node.ViewModel.IsSelected = false;
+                    flowChart.History.AddCommand(new History.NodePropertyCommand(
+                        "Deselection", node.Guid, "IsSelected", true, false));
+				}
+                Router router = FindRouter(guid);
+				if (router != null)
+				{
+					router.ViewModel.IsSelected = false;
+                    flowChart.History.AddCommand(new History.NodePropertyCommand(
+                        "Deselection", router.Guid, "IsSelected", true, false));
+				}
+            }
 			selectionList.Clear();
 		}
 
