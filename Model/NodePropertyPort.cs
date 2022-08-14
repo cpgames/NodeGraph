@@ -168,12 +168,8 @@ namespace NodeGraph.Model
             writer.WriteAttributeString("HasEditor", HasEditor.ToString());
             writer.WriteAttributeString("SerializeValue", SerializeValue.ToString());
 
-            var realValueType = ValueType;
-            if (null != Value)
-            {
-                realValueType = Value.GetType();
-                writer.WriteAttributeString("RealValueType", realValueType.AssemblyQualifiedName);
-            }
+            var realValueType = Value != null ? Value.GetType() : ValueType;
+            writer.WriteAttributeString("RealValueType", realValueType.AssemblyQualifiedName);
 
             if (SerializeValue)
             {

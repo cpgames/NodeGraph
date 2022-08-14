@@ -1,5 +1,7 @@
 ﻿using NodeGraph.ViewModel;
 using System;
+using System.Collections.ObjectModel;
+using System.Windows;
 using System.Xml;
 
 namespace NodeGraph.Model
@@ -53,6 +55,19 @@ namespace NodeGraph.Model
 			}
 		}
 
+		protected ObservableCollection<Point> _Points = new ObservableCollection<Point>();
+		public ObservableCollection<Point> Points
+		{ 
+            get { return _Points; }
+            set
+            {
+                if (value != _Points)
+                {
+                    _Points = value;
+                    RaisePropertyChanged("Points");
+                }
+            }
+    }
 		#endregion // Properties
 
 		#region Constructor

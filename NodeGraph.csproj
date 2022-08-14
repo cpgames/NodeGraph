@@ -127,6 +127,7 @@
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="View\ConnectorView.cs" />
     <Compile Include="View\ConnectorViewsContainer.cs" />
+    <Compile Include="View\CurveBuilder.cs" />
     <Compile Include="View\FlowChartView.cs" />
     <Compile Include="View\NodeFlowPortView.cs" />
     <Compile Include="View\NodeFlowPortViewsContainer.cs" />
