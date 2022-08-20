@@ -90,10 +90,17 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="{x:Type v:ConnectorView}">
-					<Grid>
+					<Canvas>
 						<Path Stroke="Transparent" StrokeThickness="20" Data="{Binding Path=CurveData, RelativeSource={RelativeSource AncestorType={x:Type v:ConnectorView}}}"/>
 						<Path x:Name="ConnectorCurve" Stroke="White" StrokeThickness="2" Data="{Binding Path=CurveData, RelativeSource={RelativeSource AncestorType={x:Type v:ConnectorView}}}"/>
-					</Grid>
+                        <v:RouterViewsContainer ItemsSource="{Binding RouterViewModels}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </v:RouterViewsContainer>
+                    </Canvas>
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
 							<Setter TargetName="ConnectorCurve" Property="Stroke" Value="DarkOrange"/>
@@ -103,8 +110,30 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
-
-	<!-- DefaultNodeFlowPortView Style -->
+    
+    <!-- RouterView Style -->
+    <Style x:Key="RouterViewStyle" TargetType="{x:Type v:RouterView}">
+        <Setter Property="Canvas.Left" Value="{Binding Model.RelativeX}"/>
+        <Setter Property="Canvas.Top" Value="{Binding Model.RelativeY}"/>
+        <Setter Property="Canvas.ZIndex" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type v:RouterView}">
+                    <Canvas Margin="-4 -4 0 0">
+                        <Border Name="BorderSelection" Width="20" Height="20" Background="Transparent"/>
+                        <Ellipse Stroke="{TemplateBinding Foreground}" IsHitTestVisible="False" StrokeThickness="2" Width="8" Height="8" Fill="White"/>
+                    </Canvas>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="BorderSelection" Property="BorderBrush" Value="Orange"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- DefaultNodeFlowPortView Style -->
 	<Style x:Key="DefaultNodeFlowPortViewStyle" TargetType="{x:Type v:NodeFlowPortView}">
 		<Setter Property="Template">
 			<Setter.Value>
@@ -503,7 +532,7 @@
 									</ItemsPanelTemplate>
 								</ItemsControl.ItemsPanel>
 							</v:ConnectorViewsContainer>
-							<!-- Nodes -->
+                            <!-- Nodes -->
 							<v:NodeViewsContainer x:Name="PART_NodeViewsContainer"
 												  IsHitTestVisible="True" 
 												  ItemsSource="{Binding NodeViewModels}">

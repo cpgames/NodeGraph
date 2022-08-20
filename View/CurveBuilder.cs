@@ -39,21 +39,34 @@ namespace NodeGraph.View
             str += segments[segments.Count - 1].ToString();
             return str;
         }
+
+        public int GetSegmentIndex(Point p)
+        {
+            foreach (var segment in segments)
+            {
+                var pMinX = Math.Min(segment.p0.X, Math.Min(segment.p1.X, Math.Min(segment.p2.X, segment.p3.X)));
+                var pMaxX = Math.Max(segment.p0.X, Math.Max(segment.p1.X, Math.Max(segment.p2.X, segment.p3.X)));
+                var pMinY = Math.Min(segment.p0.Y, Math.Min(segment.p1.Y, Math.Min(segment.p2.Y, segment.p3.Y)));
+                var pMaxY = Math.Max(segment.p0.Y, Math.Max(segment.p1.Y, Math.Max(segment.p2.Y, segment.p3.Y)));
+                var rect = new Rect(new Point(pMinX, pMinY), new Point(pMaxX, pMaxY));
+                var pRect = new Rect(new Point(p.X - 5, p.Y - 5), new Point(p.X + 5, p.Y + 5));
+                if (rect.IntersectsWith(pRect))
+                {
+                    return segments.IndexOf(segment);
+                }
+            }
+            return 0;
+        }
         #endregion
     }
 
     public static class CurveBuilder
     {
         #region Fields
-        private static readonly double TENSION = 0.5;
+        private static readonly double MIN_CONTROL_LENGTH = 50;
         #endregion
 
         #region Methods
-        private static double Dot(Point p1, Point p2)
-        {
-            return p1.X * p2.X + p1.Y * p2.Y;
-        }
-
         private static double Length(this Point p)
         {
             return Math.Sqrt(p.X * p.X + p.Y * p.Y);
@@ -73,15 +86,7 @@ namespace NodeGraph.View
         {
             return new Point(p1.X * n, p1.Y * n);
         }
-
-        //private static double Angle(Point p1, Point p2)
-        //{
-        //    var dot = Dot(p1, p2);
-        //    var l1 = p1.Length();
-        //    var l2 = p2.Length();
-        //    return Math.Acos(dot / l1 / l2);
-        //}
-
+        
         private static double Angle(Point p1, Point p2)
         {
             p1 = p1.Normalize();
@@ -112,49 +117,35 @@ namespace NodeGraph.View
         {
             var curve = new Curve();
             var prev = start;
-            var next = points.Count > 0 ? points[0] : end;
-            var vStart = Diff(next, prev);
             var vRight = new Point(1, 0);
-            var anglePrev = Angle(vStart, vRight);
-            for (var index = 0; index < points.Count; index++)
+            foreach (var cur in points)
             {
-                var a = prev;
-                var b = index < points.Count-1 ? points[index+1] : end;
-                var c = points[index];
-                var ac = Diff(c, a);
-                var ca = Diff(a, c);
-                var cb = Diff(b, c);
-                var len = ac.Length() * TENSION;
-
-                var vc1 = Rotate(ac, -anglePrev);
+                var v = Diff(cur, prev);
+                var len = Math.Max(Math.Min(Math.Abs(v.X), Math.Abs(v.Y)), MIN_CONTROL_LENGTH);
+                var angle = Angle(v, vRight);
+                var vc1 = Rotate(v, -angle);
                 
                 vc1 = vc1.Normalize().Mult(len);
-                var control1 = Add(a, vc1);
-
-                var dA = Math.Abs(Angle(ca, cb));
-                var angle = (Math.PI-dA) / 2;
-                if (b.X > c.X || b.Y > c.Y)
-                    angle *= -1;
-                var vc2 = Rotate(ca, angle);
-                vc2 = vc2.Normalize().Mult(len);
-                var control2 = Add(c, vc2);
+                var control1 = Add(prev, vc1);
+                
+                var vc2 = Mult(vc1, -1);
+                var control2 = Add(cur, vc2);
 
                 var segment = new Segment
                 {
-                    p0 = a,
+                    p0 = prev,
                     p1 = control1,
                     p2 = control2,
-                    p3 = c
+                    p3 = cur
                 };
                 curve.segments.Add(segment);
-                anglePrev = angle;
-                prev = c;
+                prev = cur;
             }
             {
-                var ac = Diff(end, prev);
-                var vc1 = Rotate(ac, -anglePrev);
-
-                var len = ac.Length() * TENSION;
+                var v = Diff(end, prev);
+                var angle = Angle(v, vRight);
+                var vc1 = Rotate(v, -angle);
+                var len = Math.Max(Math.Min(Math.Abs(v.X), Math.Abs(v.Y)), MIN_CONTROL_LENGTH);
                 vc1 = vc1.Normalize().Mult(len);
                 var control1 = Add(prev, vc1);
                 var control2 = new Point(end.X - len, end.Y);

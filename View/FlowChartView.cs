@@ -14,6 +14,7 @@ namespace NodeGraph.View
 {
     [TemplatePart(Name = "PART_ConnectorViewsContainer", Type = typeof(FrameworkElement))]
     [TemplatePart(Name = "PART_NodeViewsContainer", Type = typeof(FrameworkElement))]
+    [TemplatePart(Name = "PART_RouterViewsContainer", Type = typeof(FrameworkElement))]
     [TemplatePart(Name = "PART_DragAndSelectionCanvas", Type = typeof(FrameworkElement))]
     public class FlowChartView : ContentControl
     {

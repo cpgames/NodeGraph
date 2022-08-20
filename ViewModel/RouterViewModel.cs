@@ -1,22 +1,26 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using ConnectorGraph.ViewModel;
+﻿using System.ComponentModel;
 using NodeGraph.Model;
 using NodeGraph.View;
 
 namespace NodeGraph.ViewModel
 {
-    [ConnectorViewModel]
-    public class ConnectorViewModel : ViewModelBase
+    [NodeViewModel(ViewStyleName = "RouterViewStyle")]
+    public class RouterViewModel : ViewModelBase
     {
         #region Fields
-        private Connector _model;
-        private ObservableCollection<RouterViewModel> _routerViewModels = new ObservableCollection<RouterViewModel>();
-        public ConnectorView view;
+        private Router _model;
+        private RouterView _view;
+        private bool _isSelected;
         #endregion
 
         #region Properties
-        public Connector Model
+        public RouterView View
+        {
+            get => _view;
+            set => _view = value;
+        }
+        
+        public Router Model
         {
             get => _model;
             set
@@ -29,24 +33,24 @@ namespace NodeGraph.ViewModel
             }
         }
 
-        public ObservableCollection<RouterViewModel> RouterViewModels
+        public bool IsSelected
         {
-            get => _routerViewModels;
+            get => _isSelected;
             set
             {
-                if (value != _routerViewModels)
+                if (value != _isSelected)
                 {
-                    _routerViewModels = value;
-                    RaisePropertyChanged("RouterViewModels");
+                    _isSelected = value;
+                    RaisePropertyChanged("IsSelected");
                 }
             }
         }
         #endregion
 
         #region Constructors
-        public ConnectorViewModel(Connector connection) : base(connection)
+        public RouterViewModel(Router router) : base(router)
         {
-            Model = connection;
+            Model = router;
         }
         #endregion
 

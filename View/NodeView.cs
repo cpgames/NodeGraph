@@ -322,11 +322,13 @@ namespace NodeGraph.View
                     foreach (var guid in selectionList)
                     {
                         var currentNode = NodeGraphManager.FindNode(guid);
-
-                        flowChart.History.AddCommand(new NodePropertyCommand(
-                            "Node.X", currentNode.Guid, "X", currentNode.X - delta.X, currentNode.X));
-                        flowChart.History.AddCommand(new NodePropertyCommand(
-                            "Node.Y", currentNode.Guid, "Y", currentNode.Y - delta.Y, currentNode.Y));
+                        if (currentNode != null)
+                        {
+                            flowChart.History.AddCommand(new NodePropertyCommand(
+                                "Node.X", currentNode.Guid, "X", currentNode.X - delta.X, currentNode.X));
+                            flowChart.History.AddCommand(new NodePropertyCommand(
+                                "Node.Y", currentNode.Guid, "Y", currentNode.Y - delta.Y, currentNode.Y));
+                        }
                     }
 
                     flowChart.History.AddCommand(new ZoomAndPanCommand(

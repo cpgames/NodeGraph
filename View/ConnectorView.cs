@@ -1,171 +1,170 @@
-﻿using NodeGraph.Model;
-using NodeGraph.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using NodeGraph.History;
+using NodeGraph.ViewModel;
 
 namespace NodeGraph.View
 {
-	public class ConnectorView : ContentControl
-	{
+    public class ConnectorView : ContentControl
+    {
+        #region Fields
+        private const int MAX_ROUTERS = 3;
+        public static readonly DependencyProperty CurveDataProperty =
+            DependencyProperty.Register("CurveData", typeof(string), typeof(ConnectorView), new PropertyMetadata(""));
+
         private Curve _curve = new Curve();
+        #endregion
 
         #region Properties
-
         public ConnectorViewModel ViewModel { get; private set; }
 
-		public string CurveData
-		{
-			get { return ( string )GetValue( CurveDataProperty ); }
-			set { SetValue( CurveDataProperty, value ); }
-		}
-		public static readonly DependencyProperty CurveDataProperty =
-			DependencyProperty.Register( "CurveData", typeof( string ), typeof( ConnectorView ), new PropertyMetadata( "" ) );
+        public string CurveData
+        {
+            get => (string)GetValue(CurveDataProperty);
+            set => SetValue(CurveDataProperty, value);
+        }
+        #endregion
 
-		#endregion // Properties
-		
-		#region Constructor
+        #region Constructors
+        public ConnectorView()
+        {
+            LayoutUpdated += ConnectorView_LayoutUpdated;
+            DataContextChanged += ConnectorView_DataContextChanged;
+            Loaded += ConnectorView_Loaded;
+        }
+        #endregion
 
-		public ConnectorView()
-		{
-			LayoutUpdated += ConnectorView_LayoutUpdated;
-			DataContextChanged += ConnectorView_DataContextChanged;
-			Loaded += ConnectorView_Loaded;
-		}
+        #region Methods
+        public void BuildCurveData(Point mousePos)
+        {
+            var connector = ViewModel.Model;
+            var flowChart = connector.FlowChart;
+            var flowChartView = flowChart.ViewModel.View;
 
-		#endregion // Constructor
+            var startPort = connector.StartPort;
+            var endPort = connector.EndPort;
 
-		#region Events
+            var start = null != startPort ? ViewUtil.GetRelativeCenterLocation(startPort.ViewModel.View.PartPort, flowChartView) : mousePos;
+            var end = null != endPort ? ViewUtil.GetRelativeCenterLocation(endPort.ViewModel.View.PartPort, flowChartView) : mousePos;
 
-		private void ConnectorView_Loaded( object sender, RoutedEventArgs e )
-		{
-			SynchronizeProperties();
-		}
-
-		private void ConnectorView_DataContextChanged( object sender, DependencyPropertyChangedEventArgs e )
-		{
-			ViewModel = DataContext as ConnectorViewModel;
-			if( null == ViewModel )
-				throw new Exception( "ViewModel must be bound as DataContext in ConnectorView." );
-			ViewModel.View = this;
-			ViewModel.PropertyChanged += ViewModelPropertyChanged;
-
-			SynchronizeProperties();
-		}
-
-		private void ConnectorView_LayoutUpdated( object sender, EventArgs e )
-		{
-			FlowChart flowChart = ViewModel.Model.FlowChart;
-			FlowChartView flowChartView = flowChart.ViewModel.View;
-			BuildCurveData( Mouse.GetPosition( flowChartView ) );
-		}
-
-		protected virtual void SynchronizeProperties()
-		{
-			if( null == ViewModel )
-			{
-				return;
-			}
-		}
-		
-		protected virtual void ViewModelPropertyChanged( object sender, System.ComponentModel.PropertyChangedEventArgs e )
-		{
-			SynchronizeProperties();
-		}
-
-		#endregion // Events
-
-		#region Curve
-
-		public void BuildCurveData( Point mousePos )
-		{
-			Connector connector = ViewModel.Model;
-			FlowChart flowChart = connector.FlowChart;
-			FlowChartView flowChartView = flowChart.ViewModel.View;
-
-			NodePort startPort = connector.StartPort;
-			NodePort endPort = connector.EndPort;
-
-			Point start = ( null != startPort ) ? ViewUtil.GetRelativeCenterLocation( startPort.ViewModel.View.PartPort, flowChartView ) : mousePos;
-			Point end = ( null != endPort ) ? ViewUtil.GetRelativeCenterLocation( endPort.ViewModel.View.PartPort, flowChartView ) : mousePos;
-			
             var points = new List<Point>();
-            foreach (var point in connector.Points)
+            foreach (var router in connector.Routers)
             {
-                var pRelative = flowChartView.ZoomAndPan.Matrix.Transform(point);
-                points.Add(pRelative);
+                var point = ViewUtil.GetRelativeCenterLocation(router.ViewModel.View, flowChartView);
+                points.Add(point);
             }
             _curve = CurveBuilder.BuildCurve(start, end, points);
             CurveData = _curve.ToString();
         }
 
-		#endregion // Curve
+        private void ConnectorView_Loaded(object sender, RoutedEventArgs e)
+        {
+            SynchronizeProperties();
+        }
 
-		#region Mouse Events
+        private void ConnectorView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            ViewModel = DataContext as ConnectorViewModel;
+            if (null == ViewModel)
+            {
+                throw new Exception("ViewModel must be bound as DataContext in ConnectorView.");
+            }
+            ViewModel.view = this;
+            ViewModel.PropertyChanged += ViewModelPropertyChanged;
 
-		protected override void OnMouseEnter( MouseEventArgs e )
-		{
-			base.OnMouseEnter( e );
+            SynchronizeProperties();
+        }
 
-			Connector connector = ViewModel.Model;
+        private void ConnectorView_LayoutUpdated(object sender, EventArgs e)
+        {
+            var flowChart = ViewModel.Model.FlowChart;
+            var flowChartView = flowChart.ViewModel.View;
+            BuildCurveData(Mouse.GetPosition(flowChartView));
+        }
 
-			if( null != connector.StartPort )
-			{
-				NodePortView portView = connector.StartPort.ViewModel.View;
-				portView.IsConnectorMouseOver = true;
-			}
+        protected virtual void SynchronizeProperties()
+        {
+            if (null == ViewModel) { }
+        }
 
-			if( null != connector.EndPort )
-			{
-				NodePortView portView = connector.EndPort.ViewModel.View;
-				portView.IsConnectorMouseOver = true;
-			}
-		}
+        protected virtual void ViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            SynchronizeProperties();
+        }
+        #endregion
 
-		protected override void OnMouseLeave( MouseEventArgs e )
-		{
-			base.OnMouseLeave( e );
+        #region Mouse Events
+        protected override void OnMouseEnter(MouseEventArgs e)
+        {
+            base.OnMouseEnter(e);
 
-			Connector connector = ViewModel.Model;
+            var connector = ViewModel.Model;
 
-			if( null != connector.StartPort )
-			{
-				NodePortView portView = connector.StartPort.ViewModel.View;
-				portView.IsConnectorMouseOver = false;
-			}
+            if (null != connector.StartPort)
+            {
+                var portView = connector.StartPort.ViewModel.View;
+                portView.IsConnectorMouseOver = true;
+            }
 
-			if( null != connector.EndPort )
-			{
-				NodePortView portView = connector.EndPort.ViewModel.View;
-				portView.IsConnectorMouseOver = false;
-			}
-		}
+            if (null != connector.EndPort)
+            {
+                var portView = connector.EndPort.ViewModel.View;
+                portView.IsConnectorMouseOver = true;
+            }
+        }
 
-		protected override void OnMouseDoubleClick( MouseButtonEventArgs e )
-		{
-			base.OnMouseDoubleClick( e );
+        protected override void OnMouseLeave(MouseEventArgs e)
+        {
+            base.OnMouseLeave(e);
 
-			if( MouseButton.Left == e.ChangedButton )
-			{
-				Connector connector = ViewModel.Model;
-				FlowChart flowChart = connector.FlowChart;
-				FlowChartView flowChartView = flowChart.ViewModel.View;
-				Point vsMousePos = e.GetPosition( flowChartView );
-                connector.Points.Add(vsMousePos);
-				BuildCurveData(vsMousePos);
-				//flowChart.History.BeginTransaction( "Creating RouterNode" );
-				//{
-				//	NodeGraphManager.CreateRouterNodeForConnector( Guid.NewGuid(), flowChart, connector,
-				//		nodePos.X, nodePos.Y, 0 );
-				//}
-				//flowChart.History.EndTransaction( false );
-			}
+            var connector = ViewModel.Model;
 
-			e.Handled = true;
-		}
+            if (null != connector.StartPort)
+            {
+                var portView = connector.StartPort.ViewModel.View;
+                portView.IsConnectorMouseOver = false;
+            }
 
-		#endregion // Mouse Events
-	}
+            if (null != connector.EndPort)
+            {
+                var portView = connector.EndPort.ViewModel.View;
+                portView.IsConnectorMouseOver = false;
+            }
+        }
+
+        protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
+        {
+            base.OnMouseDoubleClick(e);
+
+            if (MouseButton.Left == e.ChangedButton)
+            {
+                var connector = ViewModel.Model;
+                var flowChart = connector.FlowChart;
+                var flowChartView = flowChart.ViewModel.View;
+                var vsMousePos = e.GetPosition(flowChartView);
+                var nodePos = flowChartView.ZoomAndPan.MatrixInv.Transform(vsMousePos);
+
+                if (connector.Routers.Count < MAX_ROUTERS)
+                {
+                    flowChart.History.BeginTransaction("Creating Router");
+                    {
+                        var index = _curve.GetSegmentIndex(nodePos);
+                        var router = NodeGraphManager.CreateRouter(Guid.NewGuid(), connector, index);
+                        router.X = nodePos.X;
+                        router.Y = nodePos.Y;
+                        flowChart.History.AddCommand(new CreateRouterCommand(
+                            "Creating router", router.Guid, NodeGraphManager.SerializeRouter(router)));
+                    }
+                    flowChart.History.EndTransaction(false);
+                }
+            }
+
+            e.Handled = true;
+        }
+        #endregion
+    }
 }

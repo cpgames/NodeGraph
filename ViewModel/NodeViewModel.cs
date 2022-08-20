@@ -97,14 +97,12 @@ namespace NodeGraph.ViewModel
         #endregion
 
         #region Methods
-        #region Events
         protected override void ModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.ModelPropertyChanged(sender, e);
 
             RaisePropertyChanged(e.PropertyName);
         }
-        #endregion // Events
         #endregion
 
         #region NodePropertyPorts
