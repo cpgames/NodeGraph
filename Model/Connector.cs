@@ -1,5 +1,4 @@
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Xml;
 using NodeGraph.ViewModel;
@@ -13,7 +12,6 @@ namespace NodeGraph.Model
         protected ConnectorViewModel _viewModel;
         protected NodePort _startPort;
         protected NodePort _endPort;
-        protected ObservableCollection<Router> _routers = new ObservableCollection<Router>();
 
         protected ConnectorViewModel _ViewModel;
 
@@ -60,19 +58,6 @@ namespace NodeGraph.Model
                 {
                     _EndPort = value;
                     RaisePropertyChanged("EndPort");
-                }
-            }
-        }
-
-        public ObservableCollection<Router> Routers
-        {
-            get => _routers;
-            set
-            {
-                if (value != _routers)
-                {
-                    _routers = value;
-                    RaisePropertyChanged("Routers");
                 }
             }
         }
@@ -183,15 +168,6 @@ namespace NodeGraph.Model
             {
                 writer.WriteAttributeString("EndPort", EndPort.Guid.ToString());
             }
-
-            writer.WriteStartElement("Routers");
-            foreach (var router in Routers)
-            {
-                writer.WriteStartElement("Router");
-                router.WriteXml(writer);
-                writer.WriteEndElement();
-            }
-            writer.WriteEndElement();
         }
 
         public override void ReadXml(XmlReader reader)
@@ -208,26 +184,6 @@ namespace NodeGraph.Model
             if (null == EndPort)
             {
                 throw new InvalidOperationException("EndPort can not be null in Connector.ReadXml().");
-            }
-
-            var index = 0;
-            while (reader.Read())
-            {
-                if (XmlNodeType.Element == reader.NodeType)
-                {
-                    if ("Router" == reader.Name)
-                    {
-                        var guid = Guid.Parse(reader.GetAttribute("Guid"));
-                        var ownerGuidString = reader.GetAttribute("Owner");
-                        var connector = NodeGraphManager.FindConnector(Guid.Parse(ownerGuidString));
-                        var router = NodeGraphManager.CreateRouter(guid, connector, index++);
-                        router.ReadXml(reader);
-                    }
-                }
-                if (reader.IsEmptyElement || reader.NodeType == XmlNodeType.EndElement)
-                {
-                    break;
-                }
             }
         }
         #endregion // Overrides IXmlSerializable

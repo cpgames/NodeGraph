@@ -1,84 +1,18 @@
 ﻿using System;
-using System.Windows;
 using System.Xml;
-using NodeGraph.View;
 using NodeGraph.ViewModel;
 
 namespace NodeGraph.Model
 {
-    public class Router : ModelBase
+    public class Router : Selectable<RouterViewModel>
     {
         #region Fields
-        protected double _x;
-        protected double _y;
-        protected int _index;
-        public readonly Connector Owner;
-        protected RouterViewModel _viewModel;
+        private int _index;
+        private Connector _connector;
         #endregion
 
         #region Properties
-        public RouterViewModel ViewModel
-        {
-            get => _viewModel;
-            set
-            {
-                if (value != _viewModel)
-                {
-                    _viewModel = value;
-                    RaisePropertyChanged("ViewModel");
-                }
-            }
-        }
-        public double X
-        {
-            get => _x;
-            set
-            {
-                if (value != _x)
-                {
-                    _x = value;
-                    RaisePropertyChanged("X");
-                    RaisePropertyChanged("RelativeX");
-                }
-            }
-        }
-        public double Y
-        {
-            get => _y;
-            set
-            {
-                if (value != _y)
-                {
-                    _y = value;
-                    RaisePropertyChanged("Y");
-                    RaisePropertyChanged("RelativeY");
-                }
-            }
-        }
-
-        public double RelativeX
-        {
-            get
-            {
-                var p = new Point(X, Y);
-                var flowChartView = Owner.FlowChart.ViewModel.View;
-                p = flowChartView.ZoomAndPan.Matrix.Transform(p);
-                return p.X;
-            }
-        }
-
-        public double RelativeY
-        {
-            get
-            {
-                var p = new Point(X, Y);
-                var flowChartView = Owner.FlowChart.ViewModel.View;
-                p = flowChartView.ZoomAndPan.Matrix.Transform(p);
-                return p.Y;
-            }
-        }
-
-        protected int Index
+        public int Index
         {
             get => _index;
             set
@@ -90,45 +24,46 @@ namespace NodeGraph.Model
                 }
             }
         }
+
+        public Connector Connector
+        {
+            get => _connector;
+            set
+            {
+                if (value != _connector)
+                {
+                    _connector = value;
+                    RaisePropertyChanged("Connector");
+                }
+            }
+        }
+        public override double ActualHeight => ViewModel.View.ActualHeight;
+        public override double ActualWidth => ViewModel.View.ActualWidth;
         #endregion
 
         #region Constructors
-        public Router(Guid guid, Connector connector, int index) : base(guid)
-        {
-            Owner = connector;
-            Index = index;
-        }
+        public Router(Guid guid, FlowChart flowChart) : base(guid, flowChart) { }
         #endregion
 
         #region Methods
-        public void ConnectView(RouterView view)
+        public override void OnCanvasRenderTransformChanged()
         {
-            var flowChartView = Owner.FlowChart.ViewModel.View;
-            flowChartView.ZoomAndPan.UpdateTransform += ZoomAndPan_UpdateTransform;
-        }
-
-        private void ZoomAndPan_UpdateTransform()
-        {
-            RaisePropertyChanged("RelativeX");
-            RaisePropertyChanged("RelativeY");
+            ViewModel.View.OnCanvasRenderTransformChanged();
         }
 
         public override void WriteXml(XmlWriter writer)
         {
             base.WriteXml(writer);
             writer.WriteAttributeString("ViewModelType", ViewModel.GetType().AssemblyQualifiedName);
-            writer.WriteAttributeString("Owner", Owner.Guid.ToString());
-            writer.WriteAttributeString("X", X.ToString());
-            writer.WriteAttributeString("Y", Y.ToString());
+            writer.WriteAttributeString("Connector", Connector.Guid.ToString());
             writer.WriteAttributeString("Index", Index.ToString());
         }
 
         public override void ReadXml(XmlReader reader)
         {
             base.ReadXml(reader);
-            X = double.Parse(reader.GetAttribute("X"));
-            Y = double.Parse(reader.GetAttribute("Y"));
-            Index = int.Parse(reader.GetAttribute("Index") ?? "0");
+            Connector = NodeGraphManager.FindConnector(Guid.Parse(reader.GetAttribute("Connector")));
+            Index = int.Parse(reader.GetAttribute("Index") ?? string.Empty);
         }
         #endregion
     }

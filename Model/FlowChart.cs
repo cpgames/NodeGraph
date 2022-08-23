@@ -79,7 +79,21 @@ namespace NodeGraph.Model
 			}
 		}
 
-		public History.NodeGraphHistory History { get; private set; }
+        protected ObservableCollection<Router> _Routers = new ObservableCollection<Router>();
+        public ObservableCollection<Router> Routers
+        {
+            get { return _Routers; }
+            set
+            {
+                if (value != _Routers)
+                {
+                    _Routers = value;
+                    RaisePropertyChanged("Routers");
+                }
+            }
+        }
+
+        public History.NodeGraphHistory History { get; private set; }
 
 		#endregion // Properties
 
@@ -183,70 +197,91 @@ namespace NodeGraph.Model
 				connector.WriteXml( writer );
 				writer.WriteEndElement();
 			}
-		}
+            writer.WriteEndElement();
 
-		public override void ReadXml( XmlReader reader )
+            writer.WriteStartElement("Routers");
+            foreach (var router in Routers)
+            {
+                writer.WriteStartElement("Router");
+                router.WriteXml(writer);
+                writer.WriteEndElement();
+            }
+        }
+
+		public override void ReadXml(XmlReader reader)
 		{
-			base.ReadXml( reader );
+			base.ReadXml(reader);
 
 			Name = reader.GetAttribute("Name");
 			if (bool.TryParse(reader.GetAttribute("IsReference"), out var isReference))
-            {
-                IsReference = isReference;
-            }
+			{
+				IsReference = isReference;
+			}
 
 			bool isNodesEnd = false;
 			bool isConnectorsEnd = false;
+			bool isRoutersEnd = false;
 
-			while( reader.Read() )
+			while (reader.Read())
 			{
-				if( XmlNodeType.Element == reader.NodeType )
+				if (XmlNodeType.Element == reader.NodeType)
 				{
-					if( ( "Node" == reader.Name ) ||
-						( "Connector" == reader.Name ) )
+					if (("Node" == reader.Name) ||
+						("Connector" == reader.Name) ||
+						("Router" == reader.Name))
 					{
 						string prevReaderName = reader.Name;
 
-						Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) );
-						Type type = Type.GetType( reader.GetAttribute( "Type" ) );
+						Guid guid = Guid.Parse(reader.GetAttribute("Guid"));
+						Type type = Type.GetType(reader.GetAttribute("Type"));
 						FlowChart flowChart = NodeGraphManager.FindFlowChart(
-							Guid.Parse( reader.GetAttribute( "Owner" ) ) );
+							Guid.Parse(reader.GetAttribute("Owner")));
 
-						if( "Node" == prevReaderName )
+						if ("Node" == prevReaderName)
 						{
-							Type vmType = Type.GetType( reader.GetAttribute( "ViewModelType" ) );
+							Type vmType = Type.GetType(reader.GetAttribute("ViewModelType"));
 
-							Node node = NodeGraphManager.CreateNode( true, guid, flowChart, type, 0.0, 0.0, 0, vmType );
-                            try
-                            {
-                                node.ReadXml(reader);
-                            }
-                            catch (Exception e)
-                            {
-                                NodeGraphManager.DestroyNode(guid);
-                            }
+							Node node = NodeGraphManager.CreateNode(true, guid, flowChart, type, 0.0, 0.0, 0, vmType);
+							try
+							{
+								node.ReadXml(reader);
+							}
+							catch (Exception e)
+							{
+								NodeGraphManager.DestroyNode(guid);
+							}
 						}
-						else
+						else if ("Connector" == prevReaderName)
 						{
-							Connector connector = NodeGraphManager.CreateConnector( false, guid, flowChart, type );
-							connector.ReadXml( reader );
+							Connector connector = NodeGraphManager.CreateConnector(false, guid, flowChart, type);
+							connector.ReadXml(reader);
 						}
+						else if ("Router" == prevReaderName)
+						{
+							Router router = NodeGraphManager.CreateRouter(guid, flowChart);
+							router.ReadXml(reader);
+						}
+
 					}
 				}
 
-				if( reader.IsEmptyElement || XmlNodeType.EndElement == reader.NodeType )
+				if (reader.IsEmptyElement || XmlNodeType.EndElement == reader.NodeType)
 				{
-					if( "Nodes" == reader.Name )
+					if ("Nodes" == reader.Name)
 					{
 						isNodesEnd = true;
 					}
-					else if( "Connectors" == reader.Name )
+					else if ("Connectors" == reader.Name)
 					{
 						isConnectorsEnd = true;
 					}
+					else if ("Routers" == reader.Name)
+					{
+						isRoutersEnd = true;
+					}
 				}
 
-				if( isNodesEnd && isConnectorsEnd )
+				if (isNodesEnd && isConnectorsEnd && isRoutersEnd)
 					break;
 			}
 		}

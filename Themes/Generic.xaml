@@ -92,14 +92,7 @@
 				<ControlTemplate TargetType="{x:Type v:ConnectorView}">
 					<Canvas>
 						<Path Stroke="Transparent" StrokeThickness="20" Data="{Binding Path=CurveData, RelativeSource={RelativeSource AncestorType={x:Type v:ConnectorView}}}"/>
-						<Path x:Name="ConnectorCurve" Stroke="White" StrokeThickness="2" Data="{Binding Path=CurveData, RelativeSource={RelativeSource AncestorType={x:Type v:ConnectorView}}}"/>
-                        <v:RouterViewsContainer ItemsSource="{Binding RouterViewModels}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <Canvas/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </v:RouterViewsContainer>
+                        <Path x:Name="ConnectorCurve" Stroke="White" StrokeThickness="2" Data="{Binding Path=CurveData, RelativeSource={RelativeSource AncestorType={x:Type v:ConnectorView}}}"/>
                     </Canvas>
 					<ControlTemplate.Triggers>
 						<Trigger Property="IsMouseOver" Value="True">
@@ -113,19 +106,28 @@
     
     <!-- RouterView Style -->
     <Style x:Key="RouterViewStyle" TargetType="{x:Type v:RouterView}">
-        <Setter Property="Canvas.Left" Value="{Binding Model.RelativeX}"/>
-        <Setter Property="Canvas.Top" Value="{Binding Model.RelativeY}"/>
-        <Setter Property="Canvas.ZIndex" Value="1"/>
+        <Setter Property="Canvas.Left" Value="{Binding Model.X}"/>
+        <Setter Property="Canvas.Top" Value="{Binding Model.Y}"/>
+        <Setter Property="Canvas.ZIndex" Value="{Binding Model.ZIndex}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type v:RouterView}">
-                    <Canvas Margin="-4 -4 0 0">
-                        <Border Name="BorderSelection" Width="20" Height="20" Background="Transparent"/>
-                        <Ellipse Stroke="{TemplateBinding Foreground}" IsHitTestVisible="False" StrokeThickness="2" Width="8" Height="8" Fill="White"/>
-                    </Canvas>
+                    <Grid >
+                        <Ellipse x:Name="BorderSelection" 
+                                 Stroke="Transparent"
+                                 StrokeThickness="{TemplateBinding SelectionThickness}" 
+                                 Width="10" Height="10" 
+                                 Fill="Transparent"
+                                 Margin="-5 -5 0 0"/>
+                        <Ellipse Stroke="{TemplateBinding Foreground}" 
+                                 StrokeThickness="2" 
+                                 Width="8" Height="8" 
+                                 Fill="White"
+                                 Margin="-4 -4 0 0"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="BorderSelection" Property="BorderBrush" Value="Orange"/>
+                            <Setter TargetName="BorderSelection" Property="Stroke" Value="Orange"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -262,105 +264,6 @@
 						<Trigger Property="IsPortEnabled" Value="False">
 							<Setter TargetName="PART_Port" Property="Visibility" Value="Hidden"/>
 							<Setter Property="IsHitTestVisible" Value="False"/>
-						</Trigger>
-					</ControlTemplate.Triggers>
-				</ControlTemplate>
-			</Setter.Value>
-		</Setter>
-	</Style>
-
-	<!-- RouterNodeView Style -->
-	<Style x:Key="RouterNodeViewStyle" TargetType="{x:Type v:NodeView}">
-		<Setter Property="Background" Value="{StaticResource NodeBackGroundColor}"/>
-		<Setter Property="BorderBrush" Value="{StaticResource NodeBorderColor}"/>
-		<Setter Property="Canvas.Left" Value="{Binding Model.X}"/>
-		<Setter Property="Canvas.Top" Value="{Binding Model.Y}"/>
-		<Setter Property="Canvas.ZIndex" Value="{Binding Model.ZIndex}"/>
-		<Setter Property="MinWidth" Value="80"/>
-		<Setter Property="Template">
-			<Setter.Value>
-				<ControlTemplate TargetType="{x:Type v:NodeView}">
-					<Grid>
-						<!-- Background -->
-						<Border Background="{TemplateBinding Background}"
-								Margin="{TemplateBinding Margin}"
-								Padding="{TemplateBinding Padding}"
-								CornerRadius="{TemplateBinding CornerRadius}"
-								Opacity="0.9">
-							<Border.Effect>
-								<BlurEffect KernelType="Box" Radius="{TemplateBinding CornerRadius}"/>
-							</Border.Effect>
-						</Border>
-						<!-- Selection -->
-						<Border x:Name="BorderSelection"
-								Background="Transparent"
-								BorderBrush="{TemplateBinding BorderBrush}"
-								BorderThickness="{TemplateBinding SelectionThickness}"
-								Margin="{TemplateBinding Margin}"
-								Padding="{TemplateBinding Padding}"
-								CornerRadius="8">
-							<!-- Content -->
-							<Grid>
-								<!-- Node Properties -->
-								<Grid>
-									<Grid.ColumnDefinitions>
-										<ColumnDefinition/>
-										<ColumnDefinition/>
-									</Grid.ColumnDefinitions>
-									<!-- Node Input FlowPorts -->
-									<v:NodeFlowPortViewsContainer Visibility="{Binding InputFlowPortsVisibility}" 
-																  IsInput="True"
-																  Grid.Column="0"
-																  HorizontalAlignment="Left"
-																  ItemsSource="{Binding InputFlowPortViewModels}">
-										<ItemsControl.ItemsPanel>
-											<ItemsPanelTemplate>
-												<StackPanel Orientation="Vertical" Margin="2"/>
-											</ItemsPanelTemplate>
-										</ItemsControl.ItemsPanel>
-									</v:NodeFlowPortViewsContainer>
-									<!-- Node Output FlowPorts -->
-									<v:NodeFlowPortViewsContainer Visibility="{Binding OutputFlowPortsVisibility}"
-																  IsInput="False"
-																  Grid.Column="1" 
-																  HorizontalAlignment="Right"
-																  ItemsSource="{Binding OutputFlowPortViewModels}">
-										<ItemsControl.ItemsPanel>
-											<ItemsPanelTemplate>
-												<StackPanel Orientation="Vertical" Margin="2"/>
-											</ItemsPanelTemplate>
-										</ItemsControl.ItemsPanel>
-									</v:NodeFlowPortViewsContainer>
-								</Grid>
-								<!-- Node Properites -->
-								<Grid>
-									<Grid.ColumnDefinitions>
-										<ColumnDefinition/>
-										<ColumnDefinition/>
-									</Grid.ColumnDefinitions>
-									<!-- Node Input PropertyPorts -->
-									<v:NodePropertyPortViewsContainer Visibility="{Binding InputPropertyPortsVisibility}"
-																	  Grid.Column="0"
-																	  IsInput="True"
-																	  HorizontalAlignment="Left"
-																	  ItemsSource="{Binding InputPropertyPortViewModels}"/>
-									<!-- Node Output ProperyPorts -->
-									<v:NodePropertyPortViewsContainer Visibility="{Binding OutputPropertyPortsVisibility}" 
-																	  Grid.Column="1" 
-																	  IsInput="False"
-																	  HorizontalAlignment="Right"
-																	  ItemsSource="{Binding OutputPropertyPortViewModels}"/>
-								</Grid>
-							</Grid>
-						</Border>
-					</Grid>
-					<ControlTemplate.Triggers>
-						<!-- Node Selection Trigger -->
-						<Trigger Property="IsSelected" Value="True">
-							<Setter TargetName="BorderSelection" Property="BorderBrush" Value="Orange"/>
-						</Trigger>
-						<Trigger Property="IsMouseOver" Value="True">
-							<Setter Property="Background" Value="{StaticResource NodeBackGroundOverColor}"/>
 						</Trigger>
 					</ControlTemplate.Triggers>
 				</ControlTemplate>
@@ -532,16 +435,28 @@
 									</ItemsPanelTemplate>
 								</ItemsControl.ItemsPanel>
 							</v:ConnectorViewsContainer>
-                            <!-- Nodes -->
-							<v:NodeViewsContainer x:Name="PART_NodeViewsContainer"
-												  IsHitTestVisible="True" 
-												  ItemsSource="{Binding NodeViewModels}">
-								<ItemsControl.ItemsPanel>
-									<ItemsPanelTemplate>
-										<Canvas/>
-									</ItemsPanelTemplate>
-								</ItemsControl.ItemsPanel>
-							</v:NodeViewsContainer>
+                            <Canvas>
+                                <!-- Routers -->
+                                <v:RouterViewsContainer x:Name="PART_RouterViewsContainer"
+                                                      IsHitTestVisible="True" 
+                                                      ItemsSource="{Binding RouterViewModels}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </v:RouterViewsContainer>
+                                <!-- Nodes -->
+							    <v:NodeViewsContainer x:Name="PART_NodeViewsContainer"
+												      IsHitTestVisible="True" 
+												      ItemsSource="{Binding NodeViewModels}">
+								    <ItemsControl.ItemsPanel>
+									    <ItemsPanelTemplate>
+										    <Canvas/>
+									    </ItemsPanelTemplate>
+								    </ItemsControl.ItemsPanel>
+							    </v:NodeViewsContainer>
+                            </Canvas>
 							<!-- Drag & Selection -->
 							<Canvas Name="PART_DragAndSelectionCanvas" 
 									Visibility="{Binding SelectionVisibility}"

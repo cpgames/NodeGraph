@@ -4,64 +4,66 @@ using System.Windows;
 
 namespace NodeGraph.View
 {
-    public class Segment
-    {
-        #region Fields
-        public Point p0;
-        public Point p1;
-        public Point p2;
-        public Point p3;
-        #endregion
-
-        #region Methods
-        public override string ToString()
-        {
-            return $"M{(int)p0.X},{(int)p0.Y} C{(int)p1.X},{(int)p1.Y} {(int)p2.X},{(int)p2.Y} {(int)p3.X},{(int)p3.Y}";
-        }
-        #endregion
-    }
-
-    public class Curve
-    {
-        #region Fields
-        public List<Segment> segments = new List<Segment>();
-        #endregion
-
-        #region Methods
-        public override string ToString()
-        {
-            var str = string.Empty;
-            for (var index = 0; index < segments.Count - 1; index++)
-            {
-                var segment = segments[index];
-                str += segment + " ";
-            }
-            str += segments[segments.Count - 1].ToString();
-            return str;
-        }
-
-        public int GetSegmentIndex(Point p)
-        {
-            foreach (var segment in segments)
-            {
-                var pMinX = Math.Min(segment.p0.X, Math.Min(segment.p1.X, Math.Min(segment.p2.X, segment.p3.X)));
-                var pMaxX = Math.Max(segment.p0.X, Math.Max(segment.p1.X, Math.Max(segment.p2.X, segment.p3.X)));
-                var pMinY = Math.Min(segment.p0.Y, Math.Min(segment.p1.Y, Math.Min(segment.p2.Y, segment.p3.Y)));
-                var pMaxY = Math.Max(segment.p0.Y, Math.Max(segment.p1.Y, Math.Max(segment.p2.Y, segment.p3.Y)));
-                var rect = new Rect(new Point(pMinX, pMinY), new Point(pMaxX, pMaxY));
-                var pRect = new Rect(new Point(p.X - 5, p.Y - 5), new Point(p.X + 5, p.Y + 5));
-                if (rect.IntersectsWith(pRect))
-                {
-                    return segments.IndexOf(segment);
-                }
-            }
-            return 0;
-        }
-        #endregion
-    }
-
     public static class CurveBuilder
     {
+        #region Nested type: Curve
+        public class Curve
+        {
+            #region Fields
+            public List<Segment> segments = new List<Segment>();
+            #endregion
+
+            #region Methods
+            public override string ToString()
+            {
+                var str = string.Empty;
+                for (var index = 0; index < segments.Count - 1; index++)
+                {
+                    var segment = segments[index];
+                    str += segment + " ";
+                }
+                str += segments[segments.Count - 1].ToString();
+                return str;
+            }
+
+            public int GetSegmentIndex(Point p, double tolerance)
+            {
+                var minDist = double.MaxValue;
+                Segment closestSegment = null;
+                foreach (var segment in segments)
+                {
+                    var dist = MinDistanceToLine(segment.p0, segment.p3, p);
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        closestSegment = segment;
+                    }
+                }
+                return segments.IndexOf(closestSegment);
+            }
+            #endregion
+        }
+        #endregion
+
+        #region Nested type: Segment
+        public class Segment
+        {
+            #region Fields
+            public Point p0;
+            public Point p1;
+            public Point p2;
+            public Point p3;
+            #endregion
+
+            #region Methods
+            public override string ToString()
+            {
+                return $"M{(int)p0.X},{(int)p0.Y} C{(int)p1.X},{(int)p1.Y} {(int)p2.X},{(int)p2.Y} {(int)p3.X},{(int)p3.Y}";
+            }
+            #endregion
+        }
+        #endregion
+
         #region Fields
         private static readonly double MIN_CONTROL_LENGTH = 50;
         #endregion
@@ -86,7 +88,7 @@ namespace NodeGraph.View
         {
             return new Point(p1.X * n, p1.Y * n);
         }
-        
+
         private static double Angle(Point p1, Point p2)
         {
             p1 = p1.Normalize();
@@ -113,6 +115,38 @@ namespace NodeGraph.View
             return new Point(x, y);
         }
 
+        private static double MinDistanceToLine(Point p0, Point p1, Point p)
+        {
+            // Return minimum distance between line segment vw and point p
+            double l2 = LengthSquared(p0, p1);  // i.e. |w-v|^2 -  avoid a sqrt
+            if (l2 == 0.0)
+                return Distance(p, p0);   // v == w case
+            // Consider the line extending the segment, parameterized as v + t (w - v).
+            // We find projection of point p onto the line. 
+            // It falls where t = [(p-v) . (w-v)] / |w-v|^2
+            // We clamp t from [0,1] to handle points outside the segment vw.
+            double t = Math.Max(0, Math.Min(1, Dot(Diff(p, p0), Diff(p1, p0)) / l2));
+            Point projection = Add(p0, Mult(Diff(p1, p0), t));  // Projection falls on the segment
+            return Distance(p, projection);
+        }
+
+        private static double Dot(Point v1, Point v2)
+        {
+            return v1.X * v2.X + v1.Y * v2.Y;
+        }
+
+        private static double Distance(Point p0, Point p1)
+        {
+            var v = Diff(p0, p1);
+            return v.Length();
+        }
+
+        private static double LengthSquared(Point p0, Point p1)
+        {
+            var v = Diff(p0, p1);
+            return v.X * v.X + v.Y * v.Y;
+        }
+
         public static Curve BuildCurve(Point start, Point end, List<Point> points)
         {
             var curve = new Curve();
@@ -124,10 +158,10 @@ namespace NodeGraph.View
                 var len = Math.Max(Math.Min(Math.Abs(v.X), Math.Abs(v.Y)), MIN_CONTROL_LENGTH);
                 var angle = Angle(v, vRight);
                 var vc1 = Rotate(v, -angle);
-                
+
                 vc1 = vc1.Normalize().Mult(len);
                 var control1 = Add(prev, vc1);
-                
+
                 var vc2 = Mult(vc1, -1);
                 var control2 = Add(cur, vc2);
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,7 +17,7 @@ namespace NodeGraph.View
         public static readonly DependencyProperty CurveDataProperty =
             DependencyProperty.Register("CurveData", typeof(string), typeof(ConnectorView), new PropertyMetadata(""));
 
-        private Curve _curve = new Curve();
+        private CurveBuilder.Curve _curve = new CurveBuilder.Curve();
         #endregion
 
         #region Properties
@@ -37,7 +38,7 @@ namespace NodeGraph.View
             Loaded += ConnectorView_Loaded;
         }
         #endregion
-
+        
         #region Methods
         public void BuildCurveData(Point mousePos)
         {
@@ -52,7 +53,9 @@ namespace NodeGraph.View
             var end = null != endPort ? ViewUtil.GetRelativeCenterLocation(endPort.ViewModel.View.PartPort, flowChartView) : mousePos;
 
             var points = new List<Point>();
-            foreach (var router in connector.Routers)
+            foreach (var router in flowChart.Routers
+                         .Where(x => x.Connector == connector)
+                         .OrderBy(x => x.Index))
             {
                 var point = ViewUtil.GetRelativeCenterLocation(router.ViewModel.View, flowChartView);
                 points.Add(point);
@@ -148,16 +151,23 @@ namespace NodeGraph.View
                 var vsMousePos = e.GetPosition(flowChartView);
                 var nodePos = flowChartView.ZoomAndPan.MatrixInv.Transform(vsMousePos);
 
-                if (connector.Routers.Count < MAX_ROUTERS)
+                var routers = flowChart.Routers.Where(r => r.Connector == connector).ToList();
+                if (routers.Count < MAX_ROUTERS)
                 {
                     flowChart.History.BeginTransaction("Creating Router");
                     {
-                        var index = _curve.GetSegmentIndex(nodePos);
-                        var router = NodeGraphManager.CreateRouter(Guid.NewGuid(), connector, index);
+                        var index = _curve.GetSegmentIndex(vsMousePos, 1.0);
+                        var router = NodeGraphManager.CreateRouter(Guid.NewGuid(), flowChart);
+                        router.Connector = connector;
+                        router.Index = index;
                         router.X = nodePos.X;
                         router.Y = nodePos.Y;
                         flowChart.History.AddCommand(new CreateRouterCommand(
                             "Creating router", router.Guid, NodeGraphManager.SerializeRouter(router)));
+                        for (var i = index; i < routers.Count; i++)
+                        {
+                            routers[i].Index++;
+                        }
                     }
                     flowChart.History.EndTransaction(false);
                 }

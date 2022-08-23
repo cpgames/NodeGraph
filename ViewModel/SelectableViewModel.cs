@@ -1,50 +1,37 @@
 ﻿using System.ComponentModel;
 using NodeGraph.Model;
-using NodeGraph.View;
 
 namespace NodeGraph.ViewModel
 {
-    [NodeViewModel(ViewStyleName = "RouterViewStyle")]
-    public class RouterViewModel : SelectableViewModel
+    public abstract class SelectableViewModel : ViewModelBase
     {
         #region Fields
-        private Router _model;
-        private RouterView _view;
+        private bool _isSelected;
         #endregion
 
         #region Properties
-        public RouterView View
+        public bool IsSelected
         {
-            get => _view;
-            set => _view = value;
-        }
-
-        public Router Model
-        {
-            get => _model;
+            get => _isSelected;
             set
             {
-                if (value != _model)
+                if (value != _isSelected)
                 {
-                    _model = value;
-                    RaisePropertyChanged("Model");
+                    _isSelected = value;
+                    RaisePropertyChanged("IsSelected");
                 }
             }
         }
         #endregion
 
         #region Constructors
-        public RouterViewModel(Router router) : base(router)
-        {
-            Model = router;
-        }
+        protected SelectableViewModel(ModelBase model) : base(model) { }
         #endregion
 
         #region Methods
         protected override void ModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.ModelPropertyChanged(sender, e);
-
             RaisePropertyChanged(e.PropertyName);
         }
         #endregion
