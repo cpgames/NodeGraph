@@ -5,10 +5,8 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using NodeGraph.History;
 using NodeGraph.Model;
 using NodeGraph.ViewModel;
 using PropertyTools.Wpf;
@@ -16,15 +14,11 @@ using PropertyTools.Wpf;
 namespace NodeGraph.View
 {
     [TemplatePart(Name = "PART_Header", Type = typeof(EditableTextBlock))]
-    public class NodeView : ContentControl
+    public class NodeView : SelectableView
     {
         #region Fields
-        public static readonly DependencyProperty IsSelectedProperty =
-            DependencyProperty.Register("IsSelected", typeof(bool), typeof(NodeView), new PropertyMetadata(false));
         public static readonly DependencyProperty HasConnectionProperty =
             DependencyProperty.Register("HasConnection", typeof(bool), typeof(NodeView), new PropertyMetadata(false));
-        public static readonly DependencyProperty SelectionThicknessProperty =
-            DependencyProperty.Register("SelectionThickness", typeof(Thickness), typeof(NodeView), new PropertyMetadata(new Thickness(2.0)));
         public static readonly DependencyProperty CornerRadiusProperty =
             DependencyProperty.Register("CornerRadius", typeof(double), typeof(NodeView), new PropertyMetadata(8.0));
         public static readonly DependencyProperty ExecutionStateImageProperty =
@@ -40,23 +34,13 @@ namespace NodeGraph.View
 
         #region Properties
         public NodeViewModel ViewModel { get; private set; }
-
-        public bool IsSelected
-        {
-            get => (bool)GetValue(IsSelectedProperty);
-            set => SetValue(IsSelectedProperty, value);
-        }
+        public override FlowChart Owner => ViewModel.Model.Owner;
+        public override ISelectable Selectable => ViewModel.Model;
 
         public bool HasConnection
         {
             get => (bool)GetValue(HasConnectionProperty);
             set => SetValue(HasConnectionProperty, value);
-        }
-
-        public Thickness SelectionThickness
-        {
-            get => (Thickness)GetValue(SelectionThicknessProperty);
-            set => SetValue(SelectionThicknessProperty, value);
         }
 
         public double CornerRadius
@@ -83,15 +67,12 @@ namespace NodeGraph.View
 
             _executionResultImages[ExecutionState.Executing] = LoadBitmapImage(
                 new Uri("pack://application:,,,/NodeGraph;component/Resources/Images/Executing.png"));
-
             _executionResultImages[ExecutionState.Executed] = LoadBitmapImage(
                 new Uri("pack://application:,,,/NodeGraph;component/Resources/Images/Executed.png"));
-
             _executionResultImages[ExecutionState.Failed] = LoadBitmapImage(
                 new Uri("pack://application:,,,/NodeGraph;component/Resources/Images/Failed.png"));
             _executionResultImages[ExecutionState.Skipped] = LoadBitmapImage(
                 new Uri("pack://application:,,,/NodeGraph;component/Resources/Images/Skipped.png"));
-            ;
         }
         #endregion
 
@@ -126,16 +107,16 @@ namespace NodeGraph.View
         #endregion // Template Events
 
         #region RenderTrasnform
-        public void OnCanvasRenderTransformChanged()
+        public override void OnCanvasRenderTransformChanged()
         {
+            base.OnCanvasRenderTransformChanged();
             if (VisualParent == null)
             {
                 return;
             }
             var matrix = (VisualParent as Canvas).RenderTransform.Value;
             var scale = matrix.M11;
-
-            SelectionThickness = new Thickness(2.0 / scale);
+            
             CornerRadius = 8.0 / scale;
         }
         #endregion // RenderTransform
@@ -232,126 +213,14 @@ namespace NodeGraph.View
         protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonUp(e);
-
-            var flowChart = ViewModel.Model.Owner;
-
             if (NodeGraphManager.IsConnecting)
             {
                 bool bConnected;
-                flowChart.History.BeginTransaction("Creating Connection");
+                Owner.History.BeginTransaction("Creating Connection");
                 {
                     bConnected = NodeGraphManager.EndConnection();
                 }
-                flowChart.History.EndTransaction(!bConnected);
-            }
-
-            if (NodeGraphManager.IsSelecting)
-            {
-                var bChanged = false;
-                flowChart.History.BeginTransaction("Selecting");
-                {
-                    bChanged = NodeGraphManager.EndDragSelection(false);
-                }
-                flowChart.History.EndTransaction(!bChanged);
-            }
-
-            if (!NodeGraphManager.AreNodesReallyDragged &&
-                NodeGraphManager.MouseLeftDownNode == ViewModel.Model)
-            {
-                flowChart.History.BeginTransaction("Selection");
-                {
-                    NodeGraphManager.TrySelection(flowChart, ViewModel.Model,
-                        Keyboard.IsKeyDown(Key.LeftCtrl),
-                        Keyboard.IsKeyDown(Key.LeftShift),
-                        Keyboard.IsKeyDown(Key.LeftAlt));
-                }
-                flowChart.History.EndTransaction(false);
-            }
-
-            NodeGraphManager.EndDragNode();
-
-            NodeGraphManager.MouseLeftDownNode = null;
-
-            e.Handled = true;
-        }
-
-        private Point _DraggingStartPos;
-        private Matrix _ZoomAndPanStartMatrix;
-
-        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
-        {
-            base.OnMouseLeftButtonDown(e);
-
-            var flowChart = ViewModel.Model.Owner;
-            var flowChartView = flowChart.ViewModel.View;
-            Keyboard.Focus(flowChartView);
-
-            NodeGraphManager.EndConnection();
-            NodeGraphManager.EndDragNode();
-            NodeGraphManager.EndDragSelection(false);
-
-            NodeGraphManager.MouseLeftDownNode = ViewModel.Model;
-
-            NodeGraphManager.BeginDragNode(flowChart);
-
-            var node = ViewModel.Model;
-            _DraggingStartPos = new Point(node.X, node.Y);
-
-            flowChart.History.BeginTransaction("Moving node");
-
-            _ZoomAndPanStartMatrix = flowChartView.ZoomAndPan.Matrix;
-
-            e.Handled = true;
-        }
-
-        protected override void OnPreviewMouseLeftButtonUp(MouseButtonEventArgs e)
-        {
-            base.OnPreviewMouseLeftButtonUp(e);
-
-            if (NodeGraphManager.IsNodeDragging)
-            {
-                var flowChart = ViewModel.Model.Owner;
-
-                var node = ViewModel.Model;
-                var delta = new Point(node.X - _DraggingStartPos.X, node.Y - _DraggingStartPos.Y);
-
-                if (0 != (int)delta.X &&
-                    0 != (int)delta.Y)
-                {
-                    var selectionList = NodeGraphManager.GetSelectionList(node.Owner);
-                    foreach (var guid in selectionList)
-                    {
-                        var currentNode = NodeGraphManager.FindNode(guid);
-
-                        flowChart.History.AddCommand(new NodePropertyCommand(
-                            "Node.X", currentNode.Guid, "X", currentNode.X - delta.X, currentNode.X));
-                        flowChart.History.AddCommand(new NodePropertyCommand(
-                            "Node.Y", currentNode.Guid, "Y", currentNode.Y - delta.Y, currentNode.Y));
-                    }
-
-                    flowChart.History.AddCommand(new ZoomAndPanCommand(
-                        "ZoomAndPan", flowChart, _ZoomAndPanStartMatrix, flowChart.ViewModel.View.ZoomAndPan.Matrix));
-
-                    flowChart.History.EndTransaction(false);
-                }
-                else
-                {
-                    flowChart.History.EndTransaction(true);
-                }
-            }
-        }
-
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-
-            if (NodeGraphManager.IsNodeDragging &&
-                NodeGraphManager.MouseLeftDownNode == ViewModel.Model &&
-                !IsSelected)
-            {
-                var node = ViewModel.Model;
-                var flowChart = node.Owner;
-                NodeGraphManager.TrySelection(flowChart, node, false, false, false);
+                Owner.History.EndTransaction(!bConnected);
             }
         }
 

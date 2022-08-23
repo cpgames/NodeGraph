@@ -11,13 +11,9 @@ using NodeGraph.ViewModel;
 namespace NodeGraph.Model
 {
     [Node]
-    public class Node : ModelBase
+    public class Node : Selectable<NodeViewModel>
     {
         #region Fields
-        public readonly FlowChart Owner;
-
-        protected NodeViewModel _ViewModel;
-
         protected string _Header;
 
         protected SolidColorBrush _HeaderBackgroundColor = Brushes.Black;
@@ -27,12 +23,6 @@ namespace NodeGraph.Model
         private bool _AllowEditingHeader = true;
 
         private bool _AllowCircularConnection  ;
-
-        protected double _X  ;
-
-        protected double _Y  ;
-
-        protected int _ZIndex = 1;
 
         protected ObservableCollection<NodeFlowPort> _InputFlowPorts = new ObservableCollection<NodeFlowPort>();
 
@@ -48,18 +38,6 @@ namespace NodeGraph.Model
         #endregion
 
         #region Properties
-        public NodeViewModel ViewModel
-        {
-            get => _ViewModel;
-            set
-            {
-                if (value != _ViewModel)
-                {
-                    _ViewModel = value;
-                    RaisePropertyChanged("ViewModel");
-                }
-            }
-        }
         public string Header
         {
             get => _Header;
@@ -125,42 +103,7 @@ namespace NodeGraph.Model
                 }
             }
         }
-        public double X
-        {
-            get => _X;
-            set
-            {
-                if (value != _X)
-                {
-                    _X = value;
-                    RaisePropertyChanged("X");
-                }
-            }
-        }
-        public double Y
-        {
-            get => _Y;
-            set
-            {
-                if (value != _Y)
-                {
-                    _Y = value;
-                    RaisePropertyChanged("Y");
-                }
-            }
-        }
-        public int ZIndex
-        {
-            get => _ZIndex;
-            set
-            {
-                if (value != _ZIndex)
-                {
-                    _ZIndex = value;
-                    RaisePropertyChanged("ZIndex");
-                }
-            }
-        }
+
         public ObservableCollection<NodeFlowPort> InputFlowPorts
         {
             get => _InputFlowPorts;
@@ -221,22 +164,22 @@ namespace NodeGraph.Model
                 }
             }
         }
-        
+
         public RelayCommand HelpCommand
         {
             get => _helpCommand;
             set => _helpCommand = value;
         }
+
+        public override double ActualHeight => ViewModel.View.ActualHeight;
+        public override double ActualWidth => ViewModel.View.ActualWidth;
         #endregion
 
         #region Constructors
         /// <summary>
         /// Never call this constructor directly. Use GraphManager.CreateNode() method.
         /// </summary>
-        public Node(Guid guid, FlowChart flowChart) : base(guid)
-        {
-            Owner = flowChart;
-        }
+        public Node(Guid guid, FlowChart flowChart) : base(guid, flowChart) { }
         #endregion
 
         #region Methods
@@ -379,6 +322,11 @@ namespace NodeGraph.Model
             RaisePropertyChanged("Model");
         }
 
+        public override void OnCanvasRenderTransformChanged()
+        {
+            ViewModel.View.OnCanvasRenderTransformChanged();
+        }
+
         public override void WriteXml(XmlWriter writer)
         {
             base.WriteXml(writer);
@@ -386,7 +334,6 @@ namespace NodeGraph.Model
             //{ Begin Creation info : You need not deserialize this block in ReadXml().
             // These are automatically serialized in FlowChart.ReadXml().
             writer.WriteAttributeString("ViewModelType", ViewModel.GetType().FullName);
-            writer.WriteAttributeString("Owner", Owner.Guid.ToString());
             //} End creation info.
 
             writer.WriteAttributeString("Header", Header);
@@ -395,10 +342,6 @@ namespace NodeGraph.Model
             writer.WriteAttributeString("AllowEditingHeader", AllowEditingHeader.ToString());
 
             writer.WriteAttributeString("AllowCircularConnection", AllowCircularConnection.ToString());
-
-            writer.WriteAttributeString("X", X.ToString());
-            writer.WriteAttributeString("Y", Y.ToString());
-            writer.WriteAttributeString("ZIndex", ZIndex.ToString());
 
             writer.WriteStartElement("InputFlowPorts");
             foreach (var port in InputFlowPorts)
@@ -450,10 +393,6 @@ namespace NodeGraph.Model
             AllowEditingHeader = bool.Parse(reader.GetAttribute("AllowEditingHeader"));
 
             AllowCircularConnection = bool.Parse(reader.GetAttribute("AllowCircularConnection"));
-
-            X = double.Parse(reader.GetAttribute("X"));
-            Y = double.Parse(reader.GetAttribute("Y"));
-            ZIndex = int.Parse(reader.GetAttribute("ZIndex"));
 
             var isInputFlowPortsEnd = false;
             var isOutputFlowPortsEnd = false;

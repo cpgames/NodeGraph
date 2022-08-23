@@ -56,7 +56,20 @@ namespace NodeGraph.ViewModel
 			}
 		}
 
-		private Visibility _SelectionVisibility = Visibility.Collapsed;
+        protected ObservableCollection<RouterViewModel> _RouterViewModels = new ObservableCollection<RouterViewModel>();
+        public ObservableCollection<RouterViewModel> RouterViewModels
+        {
+            get { return _RouterViewModels; }
+            set
+            {
+                if (value != _RouterViewModels)
+                {
+                    RaisePropertyChanged("RouterViewModels");
+                }
+            }
+        }
+
+        private Visibility _SelectionVisibility = Visibility.Collapsed;
 		public Visibility SelectionVisibility
 		{
 			get { return _SelectionVisibility; }

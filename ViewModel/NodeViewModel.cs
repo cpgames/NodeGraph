@@ -8,7 +8,7 @@ using NodeGraph.View;
 namespace NodeGraph.ViewModel
 {
     [NodeViewModel]
-    public class NodeViewModel : ViewModelBase
+    public class NodeViewModel : SelectableViewModel
     {
         #region Fields
         public Action<NodeView> NodeViewChanged;
@@ -22,7 +22,6 @@ namespace NodeGraph.ViewModel
 
         private ObservableCollection<NodeFlowPortViewModel> _OutputFlowPortViewModels = new ObservableCollection<NodeFlowPortViewModel>();
 
-        private bool _IsSelected;
         #endregion
 
         #region Properties
@@ -75,18 +74,6 @@ namespace NodeGraph.ViewModel
                 }
             }
         }
-        public bool IsSelected
-        {
-            get => _IsSelected;
-            set
-            {
-                if (value != _IsSelected)
-                {
-                    _IsSelected = value;
-                    RaisePropertyChanged("IsSelected");
-                }
-            }
-        }
         #endregion
 
         #region Constructors
@@ -97,14 +84,12 @@ namespace NodeGraph.ViewModel
         #endregion
 
         #region Methods
-        #region Events
         protected override void ModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             base.ModelPropertyChanged(sender, e);
 
             RaisePropertyChanged(e.PropertyName);
         }
-        #endregion // Events
         #endregion
 
         #region NodePropertyPorts

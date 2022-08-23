@@ -14,6 +14,7 @@ namespace NodeGraph.View
 {
     [TemplatePart(Name = "PART_ConnectorViewsContainer", Type = typeof(FrameworkElement))]
     [TemplatePart(Name = "PART_NodeViewsContainer", Type = typeof(FrameworkElement))]
+    [TemplatePart(Name = "PART_RouterViewsContainer", Type = typeof(FrameworkElement))]
     [TemplatePart(Name = "PART_DragAndSelectionCanvas", Type = typeof(FrameworkElement))]
     public class FlowChartView : ContentControl
     {
@@ -40,7 +41,7 @@ namespace NodeGraph.View
         #region Properties
         public FlowChartViewModel ViewModel { get; private set; }
         public ZoomAndPan ZoomAndPan => _ZoomAndPan;
-        public FrameworkElement NodeCanvas => _nodeCanvas ?? (_nodeCanvas = ViewUtil.FindChild<Canvas>(PartNodeViewsContainer));
+        public FrameworkElement NodeCanvas => _nodeCanvas ?? (_nodeCanvas = ViewUtil.FindFirstParent<Canvas>(PartNodeViewsContainer));
         public FrameworkElement ConnectorCanvas => _ConnectorCanvas;
         public FrameworkElement PartConnectorViewsContainer => _PartConnectorViewsContainer;
         public FrameworkElement PartNodeViewsContainer => _partNodeViewsContainer ?? (_partNodeViewsContainer = GetTemplateChild("PART_NodeViewsContainer") as FrameworkElement);
@@ -86,7 +87,7 @@ namespace NodeGraph.View
             {
                 viewSpacePos = new Point(0, 0);
                 modelSpacePos = new Point(0, 0);
-                modelType = ModelType.Node;
+                modelType = ModelType.Selecatable;
                 return null;
             }
             ModelBase model = ViewModel.Model;
@@ -114,11 +115,11 @@ namespace NodeGraph.View
                 }
                 else
                 {
-                    var nodeView = ViewUtil.FindFirstParent<NodeView>(hit);
+                    var nodeView = ViewUtil.FindFirstParent<SelectableView>(hit);
                     if (null != nodeView)
                     {
-                        model = nodeView.ViewModel.Model;
-                        modelType = ModelType.Node;
+                        model = (ModelBase)nodeView.Selectable;
+                        modelType = ModelType.Selecatable;
                     }
                     else
                     {
@@ -266,7 +267,7 @@ namespace NodeGraph.View
                     var flowChart = ViewModel.Model;
                     flowChart.History.BeginTransaction("Destroy Selected Nodes");
                     {
-                        NodeGraphManager.DeselectAllNodes(ViewModel.Model);
+                        NodeGraphManager.DeselectAll(ViewModel.Model);
                     }
                     flowChart.History.EndTransaction(false);
                 }
@@ -274,16 +275,16 @@ namespace NodeGraph.View
                 {
                     if (Keyboard.IsKeyDown(Key.LeftCtrl))
                     {
-                        NodeGraphManager.SelectAllNodes(ViewModel.Model);
+                        NodeGraphManager.SelectAll(ViewModel.Model);
                     }
                     else
                     {
-                        FitNodesToView(false);
+                        FitSelectablesToView(false);
                     }
                 }
                 else if (Key.F == e.Key)
                 {
-                    FitNodesToView(true);
+                    FitSelectablesToView(true);
                 }
                 else if (Key.Z == e.Key)
                 {
@@ -306,7 +307,7 @@ namespace NodeGraph.View
         #endregion // Keyboard Events
 
         #region Fitting.
-        public void FitNodesToView(bool bOnlySelected)
+        public void FitSelectablesToView(bool bOnlySelected)
         {
             double minX;
             double maxX;
@@ -319,7 +320,7 @@ namespace NodeGraph.View
             }
 
             var flowChart = ViewModel.Model;
-            flowChart.History.BeginTransaction("Destroy Selected Nodes");
+            flowChart.History.BeginTransaction("Destroy Selected");
             {
                 _ZoomAndPanStartMatrix = ZoomAndPan.Matrix;
 
@@ -406,12 +407,11 @@ namespace NodeGraph.View
 
             NodeCanvas.RenderTransform = new MatrixTransform(_ZoomAndPan.Matrix);
 
-            foreach (var pair in NodeGraphManager.Nodes)
+            foreach (var pair in NodeGraphManager.Selectables)
             {
                 if (pair.Value.Owner == ViewModel.Model)
                 {
-                    var nodeView = pair.Value.ViewModel.View;
-                    nodeView.OnCanvasRenderTransformChanged();
+                    pair.Value.OnCanvasRenderTransformChanged();
                 }
             }
         }
@@ -437,7 +437,7 @@ namespace NodeGraph.View
             _LeftButtonDownPos = e.GetPosition(this);
             _PrevMousePos = _LeftButtonDownPos;
 
-            if (!NodeGraphManager.IsNodeDragging &&
+            if (!NodeGraphManager.IsSelectableDragging &&
                 !NodeGraphManager.IsConnecting &&
                 !NodeGraphManager.IsSelecting)
             {
@@ -457,7 +457,7 @@ namespace NodeGraph.View
 
                 if (!bCtrl && !bShift && !bAlt)
                 {
-                    NodeGraphManager.DeselectAllNodes(ViewModel.Model);
+                    NodeGraphManager.DeselectAll(ViewModel.Model);
                 }
             }
         }
@@ -474,7 +474,7 @@ namespace NodeGraph.View
             var flowChart = ViewModel.Model;
 
             NodeGraphManager.EndConnection();
-            NodeGraphManager.EndDragNode();
+            NodeGraphManager.EndDragSelectable();
 
             if (NodeGraphManager.IsSelecting)
             {
@@ -534,7 +534,7 @@ namespace NodeGraph.View
             }
 
             NodeGraphManager.EndConnection();
-            NodeGraphManager.EndDragNode();
+            NodeGraphManager.EndDragSelectable();
             NodeGraphManager.EndDragSelection(true);
 
             var mousePos = e.GetPosition(this);
@@ -599,10 +599,10 @@ namespace NodeGraph.View
             {
                 NodeGraphManager.UpdateConnection(mousePos);
             }
-            else if (NodeGraphManager.IsNodeDragging)
+            else if (NodeGraphManager.IsSelectableDragging)
             {
                 var invScale = 1.0f / _ZoomAndPan.Scale;
-                NodeGraphManager.DragNode(new Point(delta.X * invScale, delta.Y * invScale));
+                NodeGraphManager.DragSelectable(new Point(delta.X * invScale, delta.Y * invScale));
             }
             else if (NodeGraphManager.IsSelecting)
             {
@@ -670,7 +670,7 @@ namespace NodeGraph.View
             // consequentially, connection will be broken by EndConnection() call.
             // So, below lines are commented.
             //NodeGraphManager.EndConnection();
-            //NodeGraphManager.EndDragNode();
+            //NodeGraphManager.EndDragSelectable();
             //NodeGraphManager.EndDragSelection( true );
         }
 
@@ -684,7 +684,7 @@ namespace NodeGraph.View
             }
 
             NodeGraphManager.EndConnection();
-            NodeGraphManager.EndDragNode();
+            NodeGraphManager.EndDragSelectable();
             NodeGraphManager.EndDragSelection(true);
 
             if (_IsDraggingCanvas)
@@ -940,7 +940,6 @@ namespace NodeGraph.View
         public Matrix MatrixInv => _MatrixInv;
         #endregion
 
-        #region Methods
         #region Methdos
         private void _UpdateTransform()
         {
@@ -952,7 +951,6 @@ namespace NodeGraph.View
 
             UpdateTransform?.Invoke();
         }
-        #endregion // Methods
         #endregion
 
         #region Events
