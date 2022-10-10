@@ -156,7 +156,7 @@ namespace NodeGraph.Model
 
             //{ Begin Creation info : You need not deserialize this block in ReadXml().
             // These are automatically serialized in Node.ReadXml().
-            writer.WriteAttributeString("ViewModelType", ViewModel.GetType().AssemblyQualifiedName);
+            writer.WriteAttributeString("ViewModelType", ViewModel.GetType().AssemblyQualifiedName ?? throw new InvalidOperationException());
             writer.WriteAttributeString("Owner", FlowChart.Guid.ToString());
             //} End Creation Info.
 
@@ -174,13 +174,13 @@ namespace NodeGraph.Model
         {
             base.ReadXml(reader);
 
-            StartPort = NodeGraphManager.FindNodePort(Guid.Parse(reader.GetAttribute("StartPort")));
+            StartPort = NodeGraphManager.FindNodePort(Guid.Parse(reader.GetAttribute("StartPort") ?? throw new InvalidOperationException()));
             if (null == StartPort)
             {
                 throw new InvalidOperationException("StartPort can not be null in Connector.ReadXml().");
             }
 
-            EndPort = NodeGraphManager.FindNodePort(Guid.Parse(reader.GetAttribute("EndPort")));
+            EndPort = NodeGraphManager.FindNodePort(Guid.Parse(reader.GetAttribute("EndPort") ?? throw new InvalidOperationException()));
             if (null == EndPort)
             {
                 throw new InvalidOperationException("EndPort can not be null in Connector.ReadXml().");

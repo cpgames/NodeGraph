@@ -333,7 +333,7 @@ namespace NodeGraph.Model
 
             //{ Begin Creation info : You need not deserialize this block in ReadXml().
             // These are automatically serialized in FlowChart.ReadXml().
-            writer.WriteAttributeString("ViewModelType", ViewModel.GetType().FullName);
+            writer.WriteAttributeString("ViewModelType", ViewModel.GetType().FullName ?? throw new InvalidOperationException());
             //} End creation info.
 
             writer.WriteAttributeString("Header", Header);
@@ -390,9 +390,9 @@ namespace NodeGraph.Model
                 (Color)ColorConverter.ConvertFromString(reader.GetAttribute("HeaderBackgroundColor")));
             HeaderFontColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString(
                 reader.GetAttribute("HeaderFontColor")));
-            AllowEditingHeader = bool.Parse(reader.GetAttribute("AllowEditingHeader"));
+            AllowEditingHeader = bool.Parse(reader.GetAttribute("AllowEditingHeader") ?? throw new InvalidOperationException());
 
-            AllowCircularConnection = bool.Parse(reader.GetAttribute("AllowCircularConnection"));
+            AllowCircularConnection = bool.Parse(reader.GetAttribute("AllowCircularConnection") ?? throw new InvalidOperationException());
 
             var isInputFlowPortsEnd = false;
             var isOutputFlowPortsEnd = false;

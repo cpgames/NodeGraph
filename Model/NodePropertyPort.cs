@@ -106,8 +106,8 @@ namespace NodeGraph.Model
                 }
             }
 
-            if (ValueType == null || !ValueType.IsClass && !ValueType.IsInterface && null == Value &&
-                Nullable.GetUnderlyingType(ValueType) == null)
+            if (ValueType == null || (!ValueType.IsClass && !ValueType.IsInterface && null == Value &&
+                    Nullable.GetUnderlyingType(ValueType) == null))
             {
                 throw new ArgumentNullException("If typeOfValue is not a class, you cannot specify value as null");
             }
@@ -163,18 +163,18 @@ namespace NodeGraph.Model
 
             if (ValueType != null)
             {
-                writer.WriteAttributeString("ValueType", ValueType.AssemblyQualifiedName);
+                writer.WriteAttributeString("ValueType", ValueType.AssemblyQualifiedName ?? throw new InvalidOperationException());
             }
             writer.WriteAttributeString("HasEditor", HasEditor.ToString());
             writer.WriteAttributeString("SerializeValue", SerializeValue.ToString());
 
             var realValueType = Value != null ? Value.GetType() : ValueType;
-            writer.WriteAttributeString("RealValueType", realValueType.AssemblyQualifiedName);
+            writer.WriteAttributeString("RealValueType", realValueType.AssemblyQualifiedName ?? throw new InvalidOperationException());
 
             if (SerializeValue)
             {
                 var serializer = new XmlSerializer(realValueType);
-                serializer.Serialize(writer, Value);
+                serializer.Serialize(writer, Value ?? throw new InvalidOperationException());
             }
         }
 
@@ -184,13 +184,13 @@ namespace NodeGraph.Model
 
             if (SerializeValue)
             {
-                var realValueType = Type.GetType(reader.GetAttribute("RealValueType"));
+                var realValueType = Type.GetType(reader.GetAttribute("RealValueType") ?? throw new InvalidOperationException());
 
                 while (reader.Read())
                 {
                     if (XmlNodeType.Element == reader.NodeType)
                     {
-                        var serializer = new XmlSerializer(realValueType);
+                        var serializer = new XmlSerializer(realValueType ?? throw new InvalidOperationException());
                         Value = serializer.Deserialize(reader);
                         break;
                     }

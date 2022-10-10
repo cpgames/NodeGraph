@@ -30,7 +30,7 @@ namespace NodeGraph.Model
 		public virtual void WriteXml( XmlWriter writer )
 		{
 			writer.WriteAttributeString( "Guid", Guid.ToString() );
-			writer.WriteAttributeString( "Type", GetType().AssemblyQualifiedName );
+			writer.WriteAttributeString( "Type", GetType().AssemblyQualifiedName ?? throw new InvalidOperationException() );
 		}
 
 		public virtual void ReadXml( XmlReader reader )

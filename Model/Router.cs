@@ -54,7 +54,7 @@ namespace NodeGraph.Model
         public override void WriteXml(XmlWriter writer)
         {
             base.WriteXml(writer);
-            writer.WriteAttributeString("ViewModelType", ViewModel.GetType().AssemblyQualifiedName);
+            writer.WriteAttributeString("ViewModelType", ViewModel.GetType().AssemblyQualifiedName ?? throw new InvalidOperationException());
             writer.WriteAttributeString("Connector", Connector.Guid.ToString());
             writer.WriteAttributeString("Index", Index.ToString());
         }
@@ -62,7 +62,7 @@ namespace NodeGraph.Model
         public override void ReadXml(XmlReader reader)
         {
             base.ReadXml(reader);
-            Connector = NodeGraphManager.FindConnector(Guid.Parse(reader.GetAttribute("Connector")));
+            Connector = NodeGraphManager.FindConnector(Guid.Parse(reader.GetAttribute("Connector") ?? throw new InvalidOperationException()));
             Index = int.Parse(reader.GetAttribute("Index") ?? string.Empty);
         }
         #endregion

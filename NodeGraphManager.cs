@@ -1637,8 +1637,8 @@ namespace NodeGraph
 					{
 						if( "FlowChart" == reader.Name )
 						{
-							Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) );
-							Type type = Type.GetType( reader.GetAttribute( "Type" ) );
+							Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) ?? throw new InvalidOperationException() );
+							Type type = Type.GetType( reader.GetAttribute( "Type" ) ?? throw new InvalidOperationException() );
 
 							FlowChart flowChart = CreateFlowChart( true, guid, type );
 							flowChart.ReadXml( reader );
@@ -1681,10 +1681,10 @@ namespace NodeGraph
 				{
 					if( "Node" == reader.Name )
 					{
-						Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) );
-						Type type = Type.GetType( reader.GetAttribute( "Type" ) );
-						FlowChart flowChart = FindFlowChart( Guid.Parse( reader.GetAttribute( "Owner" ) ) );
-						Type vmType = Type.GetType( reader.GetAttribute( "ViewModelType" ) );
+						Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) ?? throw new InvalidOperationException() );
+						Type type = Type.GetType( reader.GetAttribute( "Type" ) ?? throw new InvalidOperationException());
+						FlowChart flowChart = FindFlowChart( Guid.Parse( reader.GetAttribute( "Owner" ) ?? throw new InvalidOperationException()) );
+						Type vmType = Type.GetType( reader.GetAttribute( "ViewModelType" ) ?? throw new InvalidOperationException());
 
 						Node node = CreateNode( true, guid, flowChart, type, 0.0, 0.0, 0, vmType );
 						node.ReadXml( reader );
@@ -1722,9 +1722,9 @@ namespace NodeGraph
 				{
 					if( "Connector" == reader.Name )
 					{
-						Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) );
-						Type type = Type.GetType( reader.GetAttribute( "Type" ) );
-						FlowChart flowChart = FindFlowChart( Guid.Parse( reader.GetAttribute( "Owner" ) ) );
+						Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) ?? throw new InvalidOperationException());
+						Type type = Type.GetType( reader.GetAttribute( "Type" ) ?? throw new InvalidOperationException());
+						FlowChart flowChart = FindFlowChart( Guid.Parse( reader.GetAttribute( "Owner" ) ?? throw new InvalidOperationException()) );
 
 						Connector connector = CreateConnector( true, guid, flowChart, type );
 						connector.ReadXml( reader );
@@ -1762,8 +1762,8 @@ namespace NodeGraph
                 {
                     if ("Router" == reader.Name)
                     {
-                        Guid guid = Guid.Parse(reader.GetAttribute("Guid"));
-                        var flowChart = FindFlowChart(Guid.Parse(reader.GetAttribute("Owner")));
+                        Guid guid = Guid.Parse(reader.GetAttribute("Guid") ?? throw new InvalidOperationException());
+                        var flowChart = FindFlowChart(Guid.Parse(reader.GetAttribute("Owner") ?? throw new InvalidOperationException()));
                         Router router = CreateRouter(guid, flowChart);
                         router.ReadXml(reader);
                         break;
@@ -1797,11 +1797,11 @@ namespace NodeGraph
 				{
 					if( ( "NodePort" == reader.Name ) )
 					{
-						Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) );
-						Type type = Type.GetType( reader.GetAttribute( "Type" ) );
-						Type vmType = Type.GetType( reader.GetAttribute( "ViewModelType" ) );
-						Node node = FindNode( Guid.Parse( reader.GetAttribute( "Owner" ) ) );
-						bool isInput = bool.Parse( reader.GetAttribute( "IsInput" ) );
+						Guid guid = Guid.Parse( reader.GetAttribute( "Guid" ) ?? throw new InvalidOperationException());
+						Type type = Type.GetType( reader.GetAttribute( "Type" ) ?? throw new InvalidOperationException());
+						Type vmType = Type.GetType( reader.GetAttribute( "ViewModelType" ) ?? throw new InvalidOperationException());
+						Node node = FindNode( Guid.Parse( reader.GetAttribute( "Owner" ) ?? throw new InvalidOperationException()) );
+						bool isInput = bool.Parse( reader.GetAttribute( "IsInput" ) ?? throw new InvalidOperationException());
 
 						bool isFlowPort = typeof( NodeFlowPort ).IsAssignableFrom( type );
 
@@ -1815,8 +1815,8 @@ namespace NodeGraph
 						else
 						{
 							string name = reader.GetAttribute( "Name" );
-							Type valueType = Type.GetType( reader.GetAttribute( "ValueType" ) );
-							bool hasEditor = bool.Parse( reader.GetAttribute( "HasEditor" ) );
+							Type valueType = Type.GetType( reader.GetAttribute( "ValueType" ) ?? throw new InvalidOperationException());
+							bool hasEditor = bool.Parse( reader.GetAttribute( "HasEditor" ) ?? throw new InvalidOperationException());
 
 							NodePropertyPort port = CreateNodePropertyPort(
 								true, guid, node, isInput, valueType, null, name, hasEditor, vmType );
