@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows.Media;
 using System.Xml;
 using NodeGraph.ViewModel;
 
@@ -26,6 +27,8 @@ namespace NodeGraph.Model
         private bool _IsPortEnabled = true;
 
         private bool _IsEnabled = true;
+
+        private SolidColorBrush _TextForegroundColor = Brushes.White;
         #endregion
 
         #region Properties
@@ -111,6 +114,19 @@ namespace NodeGraph.Model
                 {
                     _IsEnabled = value;
                     RaisePropertyChanged("IsEnabled");
+                }
+            }
+        }
+
+        public SolidColorBrush TextForegroundColor
+        {
+            get => _TextForegroundColor;
+            set
+            {
+                if (value != _TextForegroundColor)
+                {
+                    _TextForegroundColor = value;
+                    RaisePropertyChanged("TextForegroundColor");
                 }
             }
         }
@@ -218,6 +234,7 @@ namespace NodeGraph.Model
             writer.WriteAttributeString("AllowMultipleOutput", AllowMultipleOutput.ToString());
             writer.WriteAttributeString("IsPortEnabled", IsPortEnabled.ToString());
             writer.WriteAttributeString("IsEnabled", IsEnabled.ToString());
+            writer.WriteAttributeString("TextForegroundColor", TextForegroundColor.ToString());
         }
 
         public override void ReadXml(XmlReader reader)
@@ -230,6 +247,7 @@ namespace NodeGraph.Model
             AllowMultipleOutput = bool.Parse(reader.GetAttribute("AllowMultipleOutput") ?? throw new InvalidOperationException());
             IsPortEnabled = bool.Parse(reader.GetAttribute("IsPortEnabled") ?? throw new InvalidOperationException());
             IsEnabled = bool.Parse(reader.GetAttribute("IsEnabled") ?? throw new InvalidOperationException());
+            TextForegroundColor = (SolidColorBrush)new BrushConverter().ConvertFromString(reader.GetAttribute("TextForegroundColor") ?? "White");
         }
         #endregion // Overrides IXmlSerializable
     }

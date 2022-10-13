@@ -191,7 +191,8 @@ namespace NodeGraph
 					CreateNodeFlowPort( false,
 						Guid.NewGuid(), node, attr.IsInput,
 						( null != flowPortViewModelTypeOverride ) ? flowPortViewModelTypeOverride : attr.ViewModelType,
-						attr.Name, attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled );
+						attr.Name, attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled,
+                        -1, attr.FontColorConverterType);
 				}
 
 				//----- create nodePropertyPorts( property ) from NodePropertyAttribute.
@@ -208,7 +209,7 @@ namespace NodeGraph
 								attr.ValueType, attr.DefaultValue, propertyInfo.Name, attr.HasEditor,
 								( null != propertyPortViewModelTypeOverride ) ? propertyPortViewModelTypeOverride : attr.ViewModelType,
 								attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled,
-                                attr.Index, attr.Serialized);
+                                attr.Index, attr.Serialized, attr.FontColorConverterType);
 						}
 					}
 				}
@@ -227,7 +228,7 @@ namespace NodeGraph
 								attr.ValueType, attr.DefaultValue, fieldInfo.Name, attr.HasEditor,
 								( null != propertyPortViewModelTypeOverride ) ? propertyPortViewModelTypeOverride : attr.ViewModelType,
 								attr.DisplayName, attr.AllowMultipleInput, attr.AllowMultipleOutput, attr.IsPortEnabled, attr.IsEnabled,
-                                attr.Index, attr.Serialized);
+                                attr.Index, attr.Serialized, attr.FontColorConverterType);
 						}
 					}
 				}
@@ -624,7 +625,7 @@ namespace NodeGraph
 		/// <returns>Created NodeFlwoPort instance.</returns>
 		public static NodeFlowPort CreateNodeFlowPort( bool isDeserializing, Guid guid, Node node, bool isInput, Type portViewModelTypeOverride = null,
 			string name = "None", string displayName = "None", bool allowMultipleInput = true, bool allowMultipleOutput = false, bool isPortEnabled = true, bool isEnabled = true,
-            int index = -1)
+            int index = -1, Type fontColorConverterType = null)
 		{
 			//----- exceptions.
 
@@ -642,7 +643,12 @@ namespace NodeGraph
 			port.AllowMultipleOutput = allowMultipleOutput;
 			port.IsPortEnabled = isPortEnabled;
 			port.IsEnabled = isEnabled;
-			NodeFlowPorts.Add( port.Guid, port );
+			if (fontColorConverterType != null)
+            {
+                var fontColorConverter = (IColorConverter)Activator.CreateInstance(fontColorConverterType);
+                port.TextForegroundColor = fontColorConverter.GetColor(port);
+			}
+            NodeFlowPorts.Add( port.Guid, port );
 
 			// create flowPort viewmodel.
 			var portVM = Activator.CreateInstance( ( null != portViewModelTypeOverride ) ? portViewModelTypeOverride : typeof( NodeFlowPortViewModel ),
@@ -734,7 +740,7 @@ namespace NodeGraph
 		/// <returns>Created NodePropertyPort instance.</returns>
 		public static NodePropertyPort CreateNodePropertyPort( bool isDeserializing, Guid guid, Node node, bool isInput, Type valueType, object defaultValue, string name, bool hasEditor,
 			Type portViewModelTypeOverride = null, string displayName = "", bool allowMultipleInput = false, bool allowMultipleOutput = true, bool isPortEnabled = true, bool isEnabled = true,
-            int index = -1, bool serializeValue = true)
+            int index = -1, bool serializeValue = true, Type fontColorConverterType = null)
 		{
 			//----- exceptions.
 
@@ -751,6 +757,11 @@ namespace NodeGraph
 			port.AllowMultipleOutput = allowMultipleOutput;
 			port.IsPortEnabled = isPortEnabled;
 			port.IsEnabled = isEnabled;
+			if (fontColorConverterType != null)
+            {
+                var fontColorConverter = (IColorConverter)Activator.CreateInstance(fontColorConverterType);
+				port.TextForegroundColor = fontColorConverter.GetColor(port);
+			}
 			NodePropertyPorts.Add( port.Guid, port );
 
 			// create propertyPort viewmodel.
