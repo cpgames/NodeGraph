@@ -13,7 +13,7 @@ namespace NodeGraph.Model
 		public bool HasEditor;
         public bool Serialized = true;
 
-		public NodePropertyPortAttribute( string displayName, bool isInput, Type valueType, object defaultValue, bool hasEditor ) : base( displayName, isInput )
+        public NodePropertyPortAttribute( string displayName, bool isInput, Type valueType, object defaultValue, bool hasEditor ) : base( displayName, isInput )
 		{
 			if( null != defaultValue )
 			{

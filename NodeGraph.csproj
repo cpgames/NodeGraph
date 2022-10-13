@@ -24,6 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -33,6 +34,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationFramework.Aero" />
@@ -93,6 +95,7 @@
     <Compile Include="Model\ConnectorAttribute.cs" />
     <Compile Include="Model\ExecutionState.cs" />
     <Compile Include="Model\FlowChartAttribute.cs" />
+    <Compile Include="Model\IColorConverter.cs" />
     <Compile Include="Model\ModelBase.cs" />
     <Compile Include="Model\Selectable.cs" />
     <Compile Include="Model\Router.cs" />

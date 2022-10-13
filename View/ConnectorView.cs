@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using NodeGraph.History;
 using NodeGraph.ViewModel;
 
@@ -14,10 +15,13 @@ namespace NodeGraph.View
     {
         #region Fields
         private const int MAX_ROUTERS = 3;
+
         public static readonly DependencyProperty CurveDataProperty =
             DependencyProperty.Register("CurveData", typeof(string), typeof(ConnectorView), new PropertyMetadata(""));
+        public static readonly DependencyProperty IsFullyConnectedProperty =
+            DependencyProperty.Register("IsFullyConnected", typeof(bool), typeof(ConnectorView), new PropertyMetadata(true));
 
-        private CurveBuilder.Curve _curve = new CurveBuilder.Curve();
+        private CurveBuilder.Curve _curve = new();
         #endregion
 
         #region Properties
@@ -27,6 +31,22 @@ namespace NodeGraph.View
         {
             get => (string)GetValue(CurveDataProperty);
             set => SetValue(CurveDataProperty, value);
+        }
+
+        public SolidColorBrush ConnectorColor
+        {
+            get
+            {
+                var connector = ViewModel.Model;
+                var startPort = connector.StartPort;
+                return startPort != null ? startPort.TextForegroundColor : Brushes.White;
+            }
+        }
+
+        public bool IsFullyConnected
+        {
+            get => (bool)GetValue(IsFullyConnectedProperty);
+            set => SetValue(IsFullyConnectedProperty, value);
         }
         #endregion
 
@@ -38,7 +58,7 @@ namespace NodeGraph.View
             Loaded += ConnectorView_Loaded;
         }
         #endregion
-        
+
         #region Methods
         public void BuildCurveData(Point mousePos)
         {
@@ -91,7 +111,13 @@ namespace NodeGraph.View
 
         protected virtual void SynchronizeProperties()
         {
-            if (null == ViewModel) { }
+            if (ViewModel == null)
+            {
+                return;
+            }
+
+            var connector = ViewModel.Model;
+            IsFullyConnected = connector.StartPort != null && connector.EndPort != null;
         }
 
         protected virtual void ViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -107,16 +133,10 @@ namespace NodeGraph.View
 
             var connector = ViewModel.Model;
 
-            if (null != connector.StartPort)
+            if (IsFullyConnected)
             {
-                var portView = connector.StartPort.ViewModel.View;
-                portView.IsConnectorMouseOver = true;
-            }
-
-            if (null != connector.EndPort)
-            {
-                var portView = connector.EndPort.ViewModel.View;
-                portView.IsConnectorMouseOver = true;
+                connector.StartPort.ViewModel.View.IsConnectorMouseOver = true;
+                connector.EndPort.ViewModel.View.IsConnectorMouseOver = true;
             }
         }
 
